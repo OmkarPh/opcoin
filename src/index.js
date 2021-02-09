@@ -4,10 +4,6 @@
 // GLobal dependencies
 import express from 'express';
 import slashes from 'connect-slashes';       // To remove or add trailing slash at end of request url
-if(!process.env.PORT){
-    const dotenv = await import('dotenv');
-    dotenv.config();
-}
 
 
 // Paths and URLs
@@ -24,10 +20,12 @@ import hasher from './utils/hash.js';
 
 
 // Setting up the server
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 5000
 const app = express();
-app.listen(port, ()=> console.log("Server is up and running on port "+port))
+app.use(express.json()) 
+app.use(express.urlencoded({ extended: true })) 
 app.use(slashes(false));
+app.listen(port, ()=> console.log("Server is up and running on port "+port))
 
 
 

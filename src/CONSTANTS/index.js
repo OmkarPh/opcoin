@@ -1,0 +1,12 @@
+const DIFFICULTY_ZEROES = '000';
+const MAX_TRANSACTIONS = process.env.MAX_TRANSACTIONS || 5;
+
+export default {
+    MAX_TRANSACTIONS,
+    DIFFICULTY_ZEROES
+};
+
+export {
+    MAX_TRANSACTIONS,
+    DIFFICULTY_ZEROES, 
+}
