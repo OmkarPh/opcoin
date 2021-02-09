@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-
+import axios from 'axios';
 
 // Utility modules
 import hasher from './utils/hash.js';
@@ -7,7 +7,6 @@ import hasher from './utils/hash.js';
 
 // Constants
 import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS } from './CONSTANTS/index.js';
-console.log("Mining difficulty: ", DIFFICULTY_ZEROES)
 
 // Classes
 import Block from './classes/Block.js';
@@ -27,7 +26,8 @@ const blockchain = {
     getNodes: function(){
         return Array.from(this.nodes);
     },
-    getChain: function(){ 
+    getChain: async function(){
+        await this.syncChain(); 
         if(this.chain.length == 0)
             return [];
         return  this.chain; 
@@ -37,7 +37,8 @@ const blockchain = {
             return [];
         return this.mempool;
     },
-    getChainWithHashes: function(){ 
+    getChainWithHashes: async function(){ 
+        await this.syncChain(); 
         return  this.chain.map(block => ({...block, hash: block.hashSelf()})) 
     },
     isValid: function(chain = this.chain){
@@ -72,6 +73,26 @@ const blockchain = {
             throw new Error("Max transaction size reached");
         const newBlock = new Block(this.chain.length+1, Date.now().toString(), transactions, proof, prevHash);
         this.chain.push(newBlock);
+    },
+    copyBlock: function({transactions, timestamp, proof, prevHash}){
+        const newBlock = new Block(this.chain.length+1, timestamp, transactions, proof, prevHash);
+        this.chain.push(newBlock);
+    },
+    copyChain: function(newChain){
+        if(newChain == null || newChain.length == 0)    return false;
+        let oldChain = this.chain;
+        this.chain = [];
+        try{
+            for(let {transactions, timestamp, proof, prevHash} of newChain){
+                const newBlock = new Block(this.chain.length+1, timestamp, transactions, proof, prevHash);
+                this.chain.push(newBlock);
+            }
+        }catch(e){
+            console.error("Error ocurred while copying new synced chain!!");
+            console.error(e);
+            return false;
+        }
+        return true;
     },
     mineBlock: function(){
         if(this.mempool.length == 0)
@@ -140,30 +161,52 @@ const blockchain = {
     addNode: function(address){
         this.nodes.add(address);
     },
-    replaceChain: function(){
+    syncChain: async function(){
+        let selfChain = this.chain;
+        let maxLen = this.chain.length;
+        let biggerChain  = undefined;
+        try{
+            for(let node of this.nodes){
+                const url = new URL(node);
+                try{
+                    const response = await axios.get(`http://${url.hostname}:${url.port}/blockchain`);
+                    if(response.data.length > maxLen){
+                        maxLen = response.data.length;
+                        biggerChain = response.data.chain;
+                    }
+                }catch(err){
+                    // Handles situations when the concerned node is offline, this is very common scenario, hence not logged
+                }finally{
+                    continue;
+                }
+            }
+            if(biggerChain){
+                this.copyChain(biggerChain);
+                console.log("Blockchain synced -\\-")
+                return true;
+            }
+        }catch(err){
+            console.error(err);
+            console.log("Error occured while syncing blockchain from other nodes.Not a network issue !");
+            return false;
+        }
+        return false;
+    },
+    syncMempool: async function(){
 
     }
-
 }
 
 // Blockchain initializer
 const initTransactions = [
     ["gp", "op", 34, 0.0005],
     ["pp", "op", 9, 0.00002],
-    ["op", "gp", 27, 0.025], 
     ["pp", "op", 3, 0.0002],
     ["op", "gp", 67, 0.0015], 
-    ["pp", "op", 9, 0.00002],
     ["op", "gp", 125, 0.525], 
     ["op", "pp", 234, 0.845],
-    ["gp", "op", 24, 0.0005],
     ["pp", "op", 69, 0.062],
-    ["op", "gp", 57, 0.05], 
     ["pp", "op", 300, 1.052],
-    ["op", "gp", 2, 0.00002], 
-    ["pp", "op", 21, 0.005],
-    ["op", "gp", 15, 0.025], 
-    ["op", "pp", 75, 0.05],
 ];
 for(let transaction of initTransactions)
     blockchain.mempool.push(new Transaction(...transaction));
@@ -171,7 +214,10 @@ for(let transaction of initTransactions)
 // console.log("Blockchain:\n", blockchain.getChain());
 // console.log("Blockchain validity:", blockchain.isValid());
 // blockchain.mineBlock();
-
+// blockchain.addNode('http://localhost:5001/');
+// blockchain.addNode('http://localhost:5002/');
+// console.log(await blockchain.syncChain());
+// console.log(await blockchain.syncChain());
 
 
 

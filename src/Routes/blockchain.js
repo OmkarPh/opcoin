@@ -1,6 +1,7 @@
 import express from 'express';
 const router = new express.Router();
 
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -19,15 +20,15 @@ router.get('/validity', (req,res)=>{
         res.status(200).json({message: "Valid blockchain"});
     else
         res.status(500).json({message: "valid"});
-})
-router.get('/blockchain', (req,res)=>{
-    let chain = blockchain.getChainWithHashes();
+});
+router.get('/blockchain', async (req,res)=>{
+    let chain = await blockchain.getChainWithHashes();
     res.status(200).json({
         length: chain.length,
         chain: chain
     });
 });
-router.get('/mempool', (req,res)=>{
+router.get('/mempool', async (req,res)=>{
     let mempool = blockchain.getMempool();
     res.status(200).json({
         length: mempool.length,
@@ -50,7 +51,7 @@ router.post('/addTransaction', (req,res)=>{
         });
     else
         res.status(200).json({transactionId: newTransactionId, message: "Transaction successfully added to the mempool! You'll see it in a block soon :)"})
-})
+});
 router.post('/mineBlock', (req,res)=>{
     console.log(`Started mining block #${blockchain.getLength()}`);
     let minedBlock = blockchain.mineBlock();
@@ -60,16 +61,33 @@ router.post('/mineBlock', (req,res)=>{
         res.status(500).json({message: `Some error occured while mining new block #${blockchain.getLength()}`});
     else
         res.status(200).json({message: `Mined block #${minedBlock} successfully`}); 
-})
+});
 router.post('/addNode', (req,res)=>{
     if(!req.body.node && !req.body.node.address)  return res.status(400).json({messsage: "Insufficient properties posted !!"});
     blockchain.addNode(req.body.node.address);
     res.status(200).json({message: "Node added successfully !"});
-})
+});
 router.get('/getnodes', (req, res)=>{
     res.status(200).json(blockchain.getNodes());
+});
+router.get('/syncChain', (req, res)=>{
+    blockchain.syncChain().then(data =>{
+        if(data === true)
+            return res.status(202).json({
+                message: `Block chain synced to latest state with ${blockchain.getLength()} blocks`
+            })
+        else
+            return res.status(200).json({
+                message: `Block chain is up-to-date with synced nodes !`
+            })
+    } ).catch(err =>{
+        console.log("Error in Sync Chain router: ")
+        console.log(err);
+        return res.status(500).json({
+            message: `Something went wrong during chain sync process :( Check logs for more details.`
+        })
+    });
 })
-
 
 
 export default router;
