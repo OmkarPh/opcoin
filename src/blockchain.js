@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'Nope';       // Bypass localtunnel interceptor
 
 // Utility modules
 import hasher from './utils/hash.js';
@@ -193,7 +194,7 @@ const blockchain = {
         return false;
     },
     syncMempool: async function(){
-
+        return false;
     }
 }
 
