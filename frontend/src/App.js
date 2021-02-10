@@ -10,6 +10,8 @@ import Mempool from './pages/Mempool';
 import Miner from './pages/Miner';
 import Wallet from './pages/Wallet';
 
+import axios from 'axios';
+
 function App() {
   return (
     <Router class="coverer">
