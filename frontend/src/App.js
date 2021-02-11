@@ -17,7 +17,7 @@ function App() {
     <Router class="coverer">
       <Header />
         <main className='py-3'>
-        <Container>
+        {/* <Container style={{height:"100%"}}> */}
           <Switch>
             <Route path='/' component={Home} exact />
             <Route path='/blockchain' component={Blockchain} exact />
@@ -25,8 +25,7 @@ function App() {
             <Route path='/mine' component={Miner} exact />
             <Route path='/wallet' component={Wallet} exact />
           </Switch>
-          I'm permanent
-        </Container>
+        {/* </Container> */}
         </main>
       <Footer />
     </Router>
