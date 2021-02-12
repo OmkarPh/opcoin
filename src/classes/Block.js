@@ -1,12 +1,12 @@
 import hasher from '../utils/hash.js';
 
 export default class Block{
-    constructor(blockNumber, timestamp, transactions, proof, prevHash=0) {
+    constructor(blockNumber, timestamp, transactions, nonce, prevHash=0) {
         this.number = blockNumber;
         this.timestamp = timestamp;
 
         this.transactions = transactions;
-        this.proof = proof;
+        this.nonce = nonce;
         
         this.prevHash = prevHash;
     }

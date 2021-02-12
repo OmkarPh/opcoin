@@ -10,6 +10,9 @@
     "dev-server": "nodemon -r dotenv/config src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "nodemonConfig": {
+      "ignore": ["frontend/*"]
+  },
   "keywords": [],
   "author": "Omkar Phansopkar <omkarphansopkar@gmail.com>",
   "license": "ISC",

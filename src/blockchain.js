@@ -57,7 +57,7 @@ const blockchain = {
             }
             prevProof = prevBlock.proof;
             currProof = currBlock.proof;
-            hash = hasher(String(currProof*currProof - prevProof*prevProof));
+            hash = currBlock.hashSelf();
             if(hash.substr(0,3) != DIFFICULTY_ZEROES)
                 return false;
             prevBlock = currBlock;
@@ -73,7 +73,7 @@ const blockchain = {
         if(transactions.length > MAX_TRANSACTIONS)
             throw new Error("Max transaction size reached");
         const newBlock = new Block(this.chain.length+1, Date.now().toString(), transactions, proof, prevHash);
-        this.chain.push(newBlock);
+        return newBlock;
     },
     copyBlock: function({transactions, timestamp, proof, prevHash}){
         const newBlock = new Block(this.chain.length+1, timestamp, transactions, proof, prevHash);
@@ -105,13 +105,15 @@ const blockchain = {
         try{
             let lastBlock = this.getLastBlock();
             if(lastBlock == null)
-                blockchain.createBlock(transactions, 0, 0);
+                this.chain.push(this.proofOfWork(transactions, 0));
             else
-                blockchain.createBlock(
-                    transactions, 
-                    this.proofOfWork(lastBlock.proof), 
-                    lastBlock.hashSelf()
-                );
+                this.chain.push(this.proofOfWork(transactions, lastBlock.hashSelf()));
+                // blockchain.createBlock(
+                //     transactions, 
+                //     this.proofOfWork(transactions, lastBlock.hashSelf()), 
+                //     lastBlock.hashSelf(),
+                //     true
+                // );
             
             // Remove mined transactions
             this.mempool.splice(0, transactions.length);
@@ -123,6 +125,8 @@ const blockchain = {
                 amount: 0.5,
                 fee: 0.00
             });
+
+
                 
             return this.getLastBlock().number;
         }catch(e){
@@ -131,26 +135,26 @@ const blockchain = {
             return -1;
         }
     },
-    proofOfWork: (prevProof)=>{
-        let newProof = 1;
+    proofOfWork: function(transactions, prevHash){
+        let newNonce = 0;
         let isValidProof = false;
-        let currentHash;
+        let currentBlock = null;
         while(!isValidProof){
-            currentHash = hasher(String(newProof*newProof - prevProof*prevProof));
-            if(currentHash.substr(0, 3) == '000')
+            currentBlock = this.createBlock(transactions, newNonce, prevHash);
+            if(currentBlock.hashSelf().substr(0, 3) == DIFFICULTY_ZEROES)
                 isValidProof = true
             else{
                 // Simplest computation
-                // newProof += 1;           
+                newNonce += 1;           
 
                 // Get newProof as its increment or some random value, this makes it jump way across and get very random proofs
-                newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(999999999));        
+                // newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(999999999));        
 
                 // Get very random proofs in larger range
                 // newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(Number.MAX_SAFE_INTEGER));       
             }
         }
-        return newProof;
+        return currentBlock;
     },
     addTransaction: function({sender, receiver, fee, amount}){
         let newTransaction = new Transaction(sender, receiver, amount, fee);

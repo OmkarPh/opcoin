@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios';
 
 import { Button, Container } from 'react-bootstrap'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCog, faHammer } from '@fortawesome/free-solid-svg-icons';
 
 const Miner = () => {
     const [status, setStatus] = useState("Click on Mine button above ^ to mine & contribute to OP-coin + Get assured Op-coin reward !");
@@ -13,16 +15,10 @@ const Miner = () => {
         axios
         .post("/api/mineBlock")
         .then(res=>{
-            setTimeout(
-                ()=>{
-                    console.log("Mined !");
-                    console.log(res.data);
+            setTimeout(()=>{
                     setStatus(res.data.message);
                     setMining(false);
-                }, 2000
-            )
-            // console.log("Mined !");
-            // console.log(res.data);
+                }, 1500);
             // setStatus(res.data.message);
             // setMining(false);
         }).catch(err=>{
@@ -40,7 +36,9 @@ const Miner = () => {
                 disabled={isMining}
                 onClick={!isMining ? mine : null}
                 >
-                {isMining ? 'Mining......' : 'Mine a block'}
+                { isMining ? 'Mining...' : 'Mine a block' }
+                &nbsp;&nbsp;
+                <FontAwesomeIcon icon={isMining?faCog:faHammer} className={`${isMining?'fa-spin':''}`} />
             </Button>
             <br/><br/>
             <span>{status}</span>

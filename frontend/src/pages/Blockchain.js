@@ -1,10 +1,10 @@
 import React, {useEffect, useState, useRef } from 'react'
 import axios from 'axios';
 import { Container, Card, ListGroup, Table, Row, Col, Button } from 'react-bootstrap';
-import { MDBBtn } from 'mdbreact';
 import HashLoader from "react-spinners/HashLoader";
 import Loader from '../components/Loader';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 import getRelativeTime from '../utility/relativeTime';
 
 const Blockchain = () => {
@@ -17,9 +17,15 @@ const Blockchain = () => {
         axios
           .get("/api/blockchain")
           .then(res => {
-              setTimeout(()=>setBlockchain(res.data.chain), 500);
-              setSyncing(false);
-              setStatus(new Date().toLocaleTimeString());
+              setTimeout(()=>{
+                  setBlockchain(res.data.chain)
+                  setSyncing(false);
+                  let syncTime = new Date().toLocaleTimeString();
+                  setStatus(syncTime.substring(0, syncTime.length-6) + syncTime.substring(syncTime.length-3));
+                    console.log(res.data.chain[0]);
+                    console.log(JSON.stringify(res.data.chain[0]));
+
+                }, 1000);
           })
           .catch(err => console.error(err));        
     }
@@ -35,30 +41,35 @@ const Blockchain = () => {
                 blockchain ?
                     <div>
                         <Row>
-                            <Col sm="6"></Col>
-                            <Col>
+                            <Col md="6" lg="3"><span>Last synced at {status}</span></Col>
+                            <Col md="0" lg="6" ></Col>
+                            <Col sm="8" md="6" lg="3">
                                 <Button
                                 variant="primary"
                                 disabled={isSyncing}
-                                onClick={!isSyncing ? syncChain.bind(true) : null}
+                                onClick={!isSyncing ? syncChain : null}
                                 >
-                                {isSyncing ? 'Sync in progress....' : 'Sync blockchain'}
+                                { isSyncing ?'Sync in progress ':'Sync Blockchain' }
+                                &nbsp;&nbsp;
+                                <FontAwesomeIcon icon={faSync} className={`${isSyncing?'fa-spin':''}`} />
                             </Button>
                             </Col>
-                            <Col><span>Blockchain synced at {status}</span></Col>
                         </Row>
-                        <Row>
-                            Current Length of blockchain: {blockchain.length}
+                        <span className="visible-xs-inline"><br/></span>
+                        <Row className="mb-12">
+                            <Col md="4">
+                                Current Length of blockchain: {blockchain.length}
+                            </Col>
                         </Row>
-                        {'   '}
+                        <br/>
                         
                         <Table striped bordered hover size="sm" responsive>
                             <thead>
                                 <tr>
                                 <th>#</th>
-                                <th>Hash</th>
                                 <th>Transactions</th>
-                                <th>Timestamps</th>
+                                <th>Mined</th>
+                                <th>Hash</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -67,9 +78,9 @@ const Blockchain = () => {
                                         return(
                                             <tr key={block.hash}>
                                                 <td>{block.number}</td>
-                                                <td>{block.hash}</td>
                                                 <td>{block.transactions.length}</td>
-                                                <td>{block.timestamp}  {getRelativeTime(block.timestamp)} </td> {""}
+                                                <td>{getRelativeTime(block.timestamp)} </td> {""}
+                                                <td className="fa-ellipsis-h" >{block.hash}</td>
                                             </tr>
                                         )
                                     })

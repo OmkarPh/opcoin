@@ -19,7 +19,7 @@ router.get('/validity', (req,res)=>{
     if(blockchain.isValid())
         res.status(200).json({message: "Valid blockchain"});
     else
-        res.status(500).json({message: "valid"});
+        res.status(500).json({message: "Invalid blockchain !"});
 });
 router.get('/blockchain', async (req,res)=>{
     let chain = await blockchain.getChainWithHashes();
