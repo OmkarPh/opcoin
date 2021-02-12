@@ -7,7 +7,7 @@ import hasher from './utils/hash.js';
 
 
 // Constants
-import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS } from './CONSTANTS/index.js';
+import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
 
 // Classes
 import Block from './classes/Block.js';
@@ -38,9 +38,40 @@ const blockchain = {
             return [];
         return this.mempool;
     },
-    getChainWithHashes: async function(){ 
-        await this.syncChain(); 
-        return  this.chain.map(block => ({...block, hash: block.hashSelf()})) 
+    getChainWithHashes: async function(page){ 
+        await this.syncChain();
+        let len = this.chain.length;
+
+        if(this.chain.length <= ENTRIES_PER_PAGE || !page)
+            return  {
+                page: 1,
+                length: len,
+                chain: this.chain.map(block => ({...block, hash: block.hashSelf()}))
+            };
+
+
+        // if((len - ENTRIES_PER_PAGE * page && ) < 0) page = 1;
+
+        let startIndex = len - ENTRIES_PER_PAGE * page;
+        let endIndex = len - (ENTRIES_PER_PAGE * (page-1));
+        
+        // Out of bounds, in such case return as per ?page=1
+        if(startIndex<0 && endIndex<=0){
+            startIndex = len - ENTRIES_PER_PAGE * 1;
+            endIndex = len;
+            page = 1;
+        }
+
+        // If only startIndex is out of bound, then make it 0
+        if(startIndex < 0)  startIndex = 0;
+
+        console.log(`For page #${page}, indices are ${startIndex} ${endIndex}.`);
+
+        return {
+            page,
+            length: len,
+            chain: this.chain.slice(startIndex, endIndex).reverse().map(block => ({...block, hash: block.hashSelf()}))
+        };
     },
     isValid: function(chain = this.chain){
         if(chain.length <= 1)  return true;
@@ -224,6 +255,6 @@ for(let transaction of initTransactions)
 // console.log(await blockchain.syncChain());
 // console.log(await blockchain.syncChain());
 
-
+for(let i=0; i<27; i++)    blockchain.mineBlock();
 
 export default blockchain;

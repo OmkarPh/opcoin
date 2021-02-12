@@ -91,7 +91,7 @@ const Mempool = () => {
                             </Table>
 
                     </div> : <Loader>
-                        <HashLoader color={"#0411E0"} loading={true} size={150} />
+                        <HashLoader color={"#03a30b"} loading={true} size={150} />
                     </Loader>
 
             } 

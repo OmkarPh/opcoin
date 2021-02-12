@@ -22,11 +22,12 @@ router.get('/validity', (req,res)=>{
         res.status(500).json({message: "Invalid blockchain !"});
 });
 router.get('/blockchain', async (req,res)=>{
-    let chain = await blockchain.getChainWithHashes();
-    res.status(200).json({
-        length: chain.length,
-        chain: chain
-    });
+    let page = req.query.page ? Math.round(parseInt(req.query.page)) : 1;
+    if(!page)   page = 1;
+
+    let chain = await blockchain.getChainWithHashes(page);
+
+    res.status(200).json(chain);
 });
 router.get('/mempool', async (req,res)=>{
     let mempool = blockchain.getMempool();

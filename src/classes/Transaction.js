@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 export default class Transaction{
     constructor(sender, receiver, amount, fee){
         this.id = uuidv4();
-        this.timeStamp = Date.now().toString();
+        this.timestamp = Date.now().toString();
 
         this.sender = sender;
         this.receiver = receiver;
