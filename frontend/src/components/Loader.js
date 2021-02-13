@@ -8,7 +8,7 @@ const Loader = ({children}) => {
             <Col sm={5}  />
             <Col sm={2}>
                 <center>
-                    <div class="d-flex justify-center align-items-center">
+                    <div className="d-flex justify-center align-items-center">
                             {/* <HashLoader color={"#0411E0"} loading={true} size={150} /> */}
                             {children}
                     </div>

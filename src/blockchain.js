@@ -41,11 +41,11 @@ const blockchain = {
     getChainWithHashes: async function(page){ 
         await this.syncChain();
         let len = this.chain.length;
-
         if(this.chain.length <= ENTRIES_PER_PAGE || !page)
             return  {
                 page: 1,
                 length: len,
+                maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
                 chain: this.chain.map(block => ({...block, hash: block.hashSelf()}))
             };
 
@@ -64,12 +64,10 @@ const blockchain = {
 
         // If only startIndex is out of bound, then make it 0
         if(startIndex < 0)  startIndex = 0;
-
-        console.log(`For page #${page}, indices are ${startIndex} ${endIndex}.`);
-
         return {
             page,
             length: len,
+            maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
             chain: this.chain.slice(startIndex, endIndex).reverse().map(block => ({...block, hash: block.hashSelf()}))
         };
     },
@@ -255,6 +253,6 @@ for(let transaction of initTransactions)
 // console.log(await blockchain.syncChain());
 // console.log(await blockchain.syncChain());
 
-for(let i=0; i<27; i++)    blockchain.mineBlock();
+for(let i=0; i<53; i++)    blockchain.mineBlock();
 
 export default blockchain;
