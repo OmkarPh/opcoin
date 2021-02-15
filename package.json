@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon -r dotenv/config src/index.js",
-    "start": "node -r dotenv/config src/index.js",
+    "start-dev": "node -r dotenv/config src/index.js",
+    "start": "node src/index.js",
     "dev-server": "nodemon -r dotenv/config src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
   },
   "nodemonConfig": {
       "ignore": ["frontend/*"]

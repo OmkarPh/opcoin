@@ -1,4 +1,8 @@
 // Node Core dependencies
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 // GLobal dependencies
@@ -6,8 +10,6 @@ import express from 'express';
 import localtunnel from 'localtunnel';
 import slashes from 'connect-slashes';       // To remove or add trailing slash at end of request url
 
-
-// Paths and URLs
 
 
 
@@ -27,6 +29,9 @@ const app = express();
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true })) 
 app.use(slashes(false));
+
+
+
 app.listen(PORT, ()=> {
     console.log(`Server is up and running on port ${PORT}`);
 
@@ -58,13 +63,6 @@ app.listen(PORT, ()=> {
 
 
 
-// Site Home
-app.get("/", (req, res) => {
-    res.send("This is home page of my blockchain.");
- });
- 
-
-
 
 // Routes
 
@@ -90,10 +88,20 @@ app.get('/responses/ping', (req, res)=>{
     res.status(200).send('-- ok --');
 });
 
+
+
+// Serve react from build directory when in production
+if(process.env.NODE_ENV === 'production'){
+    app.use(express.static('frontend/build'));
+    app.get('*', (req, res)=>{
+        res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html'));
+    });
+}
+
 // Pushing 404 page from another route
 app.get('/404',(req,res)=>{
     res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
-})
+});
 
 // 404 page
 app.get('*', (req, res)=>{

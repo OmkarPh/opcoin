@@ -253,6 +253,7 @@ for(let transaction of initTransactions)
 // console.log(await blockchain.syncChain());
 // console.log(await blockchain.syncChain());
 
-for(let i=0; i<53; i++)    blockchain.mineBlock();
+if(process.env.NODE_ENV !== 'production')
+    for(let i=0; i<53; i++)    blockchain.mineBlock();
 
 export default blockchain;
