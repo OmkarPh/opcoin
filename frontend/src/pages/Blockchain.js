@@ -37,7 +37,8 @@ const Blockchain = (props) => {
     const [status, setStatus] = useState(Date.now());
 
     const syncChain = () => {
-        setBlockchain(undefined);
+        if(!isSyncing)
+            setBlockchain(undefined);
         axios
           .get(`/api/blockchain?page=${page}`)
           .then(res => {

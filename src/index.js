@@ -94,16 +94,16 @@ app.get('/responses/ping', (req, res)=>{
 if(process.env.NODE_ENV === 'production'){
     app.use(express.static('frontend/build'));
     app.get('*', (req, res)=>{
-        res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html'));
+        res.sendFile(path.resolve(__dirname, '..','frontend', 'build', 'index.html'));
     });
 }
 
-// Pushing 404 page from another route
-app.get('/404',(req,res)=>{
-    res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
-});
+// // Pushing 404 page from another route
+// app.get('/404',(req,res)=>{
+//     res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
+// });
 
-// 404 page
-app.get('*', (req, res)=>{
-    res.redirect('/404');
-});
+// // 404 page
+// app.get('*', (req, res)=>{
+//     res.redirect('/404');
+// });
