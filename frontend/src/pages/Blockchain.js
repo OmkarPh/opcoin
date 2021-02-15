@@ -1,29 +1,36 @@
 import React, {useEffect, useState, useRef } from 'react'
 import axios from 'axios';
-import { Container, Card, ListGroup, Table, Row, Col, Button, Pagination } from 'react-bootstrap';
+import { Container, Table, Row, Col, Button } from 'react-bootstrap';
 import HashLoader from "react-spinners/HashLoader";
 import Loader from '../components/Loader';
-import { Link } from 'react-router-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import getRelativeTime from '../utility/relativeTime';
 import queryString from 'query-string';
 
-const paginationItems = (activePage, maxPages, setPage)=>{
-    const items = [];
-    for(let page=activePage-2; page<activePage+5; page++){
-        if(page > 1 && page < maxPages-1)
-            items.push(
-                <Pagination.Item
-                    active={activePage === page}
-                    onClick={()=>setPage(page)} 
-                    key={page}> 
-                    {page}
-                </Pagination.Item>
+import Pagination from '../components/Pagination';
+
+const fillRemainingRows = (actualLength) => {
+    const remainingRows = [];
+    if(actualLength < process.env.REACT_APP_ENTRIES_PER_PAGE){
+        for(let i=0; i<(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength); i++){
+            console.log(i)
+            remainingRows.push(
+                <tr key={i}>
+                    <td>{<br/>}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>{} </td> {""}
+                    <td className="fa-ellipsis-h">{}</td>
+                </tr>
             );
+        }
     }
-    return items;
+    console.log(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength, remainingRows);
+    return remainingRows;
 }
+
 
 const Blockchain = (props) => {
 
@@ -36,13 +43,13 @@ const Blockchain = (props) => {
     const [isSyncing, setSyncing] = useState(false);
     const [status, setStatus] = useState(Date.now());
 
-    const syncChain = () => {
-        if(!isSyncing)
+    const syncChain = (startLoader=true) => {
+        if(startLoader)
             setBlockchain(undefined);
+        setSyncing(true);
         axios
           .get(`/api/blockchain?page=${page}`)
           .then(res => {
-              console.log(`Fetched data page: ${page}`);
               setTimeout(()=>{
                   setBlockchain(res.data)
                   setSyncing(false);
@@ -58,12 +65,9 @@ const Blockchain = (props) => {
 
     useEffect(() => {
         props.history.push(`${props.location.pathname}?page=${page}`)
-        console.log(`Page no. changed renderer new page: ${page}`);
-        syncChain();
-        
+        syncChain(true);
         return ()=>{}
     },[page]);
-
     
 
     return (
@@ -78,7 +82,7 @@ const Blockchain = (props) => {
                                 <Button
                                 variant="primary"
                                 disabled={isSyncing}
-                                onClick={!isSyncing ? syncChain : null}
+                                onClick={!isSyncing ? ()=>syncChain(false) : null}
                                 >
                                 { isSyncing ?'Sync in progress ':'Sync Blockchain' }
                                 &nbsp;&nbsp;
@@ -117,23 +121,12 @@ const Blockchain = (props) => {
                                     })
                                 }
                             </tbody>
+                            { fillRemainingRows(blockchain.chain.length)}
                             </Table>
-                            
-                            <Pagination>
-                            {/* <Pagination.First onClick={()=>setPage(1)} disabled={page==1} />
-                            <Pagination.Prev onClick={()=>setPage(page=>page-1)} disabled={page==1}/> */}
-                            <Pagination.Item onClick={()=>setPage(1)}>1</Pagination.Item>
-                            { (page-2) > 2 ? <Pagination.Ellipsis /> : null }
-                            
-                            { paginationItems(page, pagination.maxPages, setPage) }
-
-                            <Pagination.Ellipsis />
-                            <Pagination.Item  onClick={()=>setPage(pagination.maxPages)} >{pagination.maxPages}</Pagination.Item>
-                            {/* <Pagination.Next />
-                            <Pagination.Last /> */}
-                            </Pagination>
-
-                    </div> : <Loader>
+                            <Pagination page={page} setPage={setPage} pagination={pagination} />
+                    </div> 
+                    : 
+                    <Loader>
                         <HashLoader color={"#0466cf"} loading={true} size={150} />
                     </Loader>
 

@@ -96,14 +96,14 @@ if(process.env.NODE_ENV === 'production'){
     app.get('*', (req, res)=>{
         res.sendFile(path.resolve(__dirname, '..','frontend', 'build', 'index.html'));
     });
+}else{
+    // 404 pages for development
+
+    app.get('/404',(req,res)=>{
+        res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
+    });
+    app.get('*', (req, res)=>{
+        res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
+    });
 }
 
-// // Pushing 404 page from another route
-// app.get('/404',(req,res)=>{
-//     res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
-// });
-
-// // 404 page
-// app.get('*', (req, res)=>{
-//     res.redirect('/404');
-// });

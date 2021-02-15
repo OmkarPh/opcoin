@@ -33,24 +33,46 @@ const blockchain = {
             return [];
         return  this.chain; 
     },
-    getMempool: function(){
-        if(this.mempool.length == 0)
-            return [];
-        return this.mempool;
+    getMempool: function(page){
+        let len = this.mempool.length;
+        if(len <= ENTRIES_PER_PAGE || !page)
+            return  {
+                page: 1,
+                length: len,
+                maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
+                mempool: this.mempool
+            };
+
+        let startIndex = ENTRIES_PER_PAGE * (page-1);
+        let endIndex = ENTRIES_PER_PAGE * page;
+        
+        // Both indices Out of bounds, in such case return as per ?page=1
+        if(startIndex<0 && endIndex<=0){
+            startIndex = 0;
+            endIndex = ENTRIES_PER_PAGE*1;
+            page = 1;
+        }
+
+        // If only endIndex is out of bound, then make it max
+        if(endIndex > len)  endIndex = len;
+
+        return {
+            page,
+            length: len,
+            maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
+            mempool: this.mempool.slice(startIndex, endIndex)
+        };
     },
     getChainWithHashes: async function(page){ 
         await this.syncChain();
         let len = this.chain.length;
-        if(this.chain.length <= ENTRIES_PER_PAGE || !page)
+        if(len <= ENTRIES_PER_PAGE || !page)
             return  {
                 page: 1,
                 length: len,
                 maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
                 chain: this.chain.map(block => ({...block, hash: block.hashSelf()}))
             };
-
-
-        // if((len - ENTRIES_PER_PAGE * page && ) < 0) page = 1;
 
         let startIndex = len - ENTRIES_PER_PAGE * page;
         let endIndex = len - (ENTRIES_PER_PAGE * (page-1));
@@ -137,12 +159,6 @@ const blockchain = {
                 this.chain.push(this.proofOfWork(transactions, 0));
             else
                 this.chain.push(this.proofOfWork(transactions, lastBlock.hashSelf()));
-                // blockchain.createBlock(
-                //     transactions, 
-                //     this.proofOfWork(transactions, lastBlock.hashSelf()), 
-                //     lastBlock.hashSelf(),
-                //     true
-                // );
             
             // Remove mined transactions
             this.mempool.splice(0, transactions.length);
@@ -244,6 +260,8 @@ const initTransactions = [
 ];
 for(let transaction of initTransactions)
     blockchain.mempool.push(new Transaction(...transaction));
+for(let transaction of initTransactions)
+    blockchain.mempool.push(new Transaction(...transaction));
 // console.log("Mempool:\n", blockchain.mempool);
 // console.log("Blockchain:\n", blockchain.getChain());
 // console.log("Blockchain validity:", blockchain.isValid());
@@ -254,6 +272,6 @@ for(let transaction of initTransactions)
 // console.log(await blockchain.syncChain());
 
 if(process.env.NODE_ENV !== 'production')
-    for(let i=0; i<53; i++)    blockchain.mineBlock();
+    for(let i=0; i<125; i++)    blockchain.mineBlock();
 
 export default blockchain;
