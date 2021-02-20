@@ -13,7 +13,9 @@
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
   },
   "nodemonConfig": {
-      "ignore": ["frontend/*"]
+    "ignore": [
+      "frontend/*"
+    ]
   },
   "keywords": [],
   "author": "Omkar Phansopkar <omkarphansopkar@gmail.com>",
@@ -28,6 +30,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "localtunnel": "^2.0.1",
+    "pubnub": "^4.29.11",
     "slashes": "^2.0.2",
     "uuid": "^8.3.2"
   }

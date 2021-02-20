@@ -5,6 +5,10 @@ axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'Nope';       // Bypas
 // Utility modules
 import hasher from './utils/hash.js';
 
+// PubSub networking utitlity
+import PubSub from './utils/pubsub.js';
+import {CHANNELS} from './utils/pubsub.js';
+
 
 // Constants
 import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
@@ -20,7 +24,7 @@ const blockchain = {
     mempool: [],
     nodes: new Set(),
     nodeAddress: uuidv4().replace('-',''),
-
+    pubsub: new PubSub([CHANNELS.OPCOIN]),
     getLength: function(){ 
         return this.chain.length;
     },
@@ -146,6 +150,19 @@ const blockchain = {
         }
         return true;
     },
+    receiveUpdate: function(blockchain, messageObject){
+        const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
+        console.log(message !== null, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken);
+        console.log('Message received in receive update');
+        const newChain = JSON.parse(message.description);
+        console.log(newChain, typeof newChain, newChain.length, blockchain.chain)
+        console.log(newChain.length, blockchain.chain.length);
+        if(newChain.length > blockchain.chain.length){
+            console.log('Copying chain');
+            block.copyChain(newChain)
+            console.log('Copied chain');
+        }
+    },
     mineBlock: function(){
         if(this.mempool.length == 0)
             return 0;
@@ -170,9 +187,11 @@ const blockchain = {
                 amount: 0.5,
                 fee: 0.00
             });
-
-
-                
+            console.log('Before sending, length of chain: ',this.chain.length)
+            this.pubsub.publish({
+                titile: "New block", 
+                description: JSON.stringify(this.chain)
+            });                
             return this.getLastBlock().number;
         }catch(e){
             console.log(e);
@@ -246,7 +265,12 @@ const blockchain = {
         return false;
     }
 }
-
+try{
+    // blockchain.publishChanges = (new PubSub(blockchain.receiveUpdate , [CHANNELS.OPCOIN])).publish;
+    blockchain.pubsub.addListener(blockchain.receiveUpdate.bind(blockchain));
+}catch(e){
+    console.log("Something weird");
+}
 // Blockchain initializer
 const initTransactions = [
     ["gp", "op", 34, 0.0005],
@@ -272,6 +296,6 @@ for(let transaction of initTransactions)
 // console.log(await blockchain.syncChain());
 
 if(process.env.NODE_ENV !== 'production')
-    for(let i=0; i<125; i++)    blockchain.mineBlock();
+    for(let i=0; i<4; i++)    blockchain.mineBlock();
 
 export default blockchain;
