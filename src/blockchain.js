@@ -4,6 +4,9 @@ axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'Nope';       // Bypas
 
 // Utility modules
 import hasher from './utils/hash.js';
+import pow from './utils/pow.js'
+import isValidChain from './utils/isValid.js';
+import hashedChain from './utils/hashedChain.js';
 
 // PubSub networking utitlity
 import PubSub from './utils/pubsub.js';
@@ -17,22 +20,20 @@ import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTAN
 import Block from './classes/Block.js';
 import Transaction from './classes/Transaction.js';
 
-
 // Major object
 const blockchain = {
     chain: [],
     mempool: [],
-    nodes: new Set(),
     nodeAddress: uuidv4().replace('-',''),
-    pubsub: new PubSub([CHANNELS.OPCOIN]),
+    blockchainPubsub: new PubSub([CHANNELS.OPCOIN]),
+    mempoolPubsub: new PubSub([CHANNELS.OPCOIN_MEMPOOL]),
+    init: function(){
+        this.blockchainPubsub.addListener(this.receiveUpdate.bind(this));
+    },
     getLength: function(){ 
         return this.chain.length;
     },
-    getNodes: function(){
-        return Array.from(this.nodes);
-    },
     getChain: async function(){
-        await this.syncChain(); 
         if(this.chain.length == 0)
             return [];
         return  this.chain; 
@@ -67,67 +68,21 @@ const blockchain = {
             mempool: this.mempool.slice(startIndex, endIndex)
         };
     },
-    getChainWithHashes: async function(page){ 
-        await this.syncChain();
-        let len = this.chain.length;
-        if(len <= ENTRIES_PER_PAGE || !page)
-            return  {
-                page: 1,
-                length: len,
-                maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
-                chain: this.chain.map(block => ({...block, hash: block.hashSelf()}))
-            };
-
-        let startIndex = len - ENTRIES_PER_PAGE * page;
-        let endIndex = len - (ENTRIES_PER_PAGE * (page-1));
-        
-        // Out of bounds, in such case return as per ?page=1
-        if(startIndex<0 && endIndex<=0){
-            startIndex = len - ENTRIES_PER_PAGE * 1;
-            endIndex = len;
-            page = 1;
-        }
-
-        // If only startIndex is out of bound, then make it 0
-        if(startIndex < 0)  startIndex = 0;
-        return {
-            page,
-            length: len,
-            maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
-            chain: this.chain.slice(startIndex, endIndex).reverse().map(block => ({...block, hash: block.hashSelf()}))
-        };
+    getChainWithHashes: function(page){
+        return hashedChain(page, this.chain);
     },
-    isValid: function(chain = this.chain){
-        if(chain.length <= 1)  return true;
-
-        let prevBlock = chain[0];
-        let currBlock, currProof, prevProof, hash;
-
-        for(let i = 1; i<chain.length; i++){
-            currBlock = chain[i];
-            if(currBlock.prevHash != prevBlock.hashSelf()){
-                console.log(`Something invalid with link between block no. ${prevBlock.number} and ${currBlock.number}`)
-                console.log(currBlock.number, currBlock.prevHash, prevBlock.hashSelf());
-                return false;
-            }
-            prevProof = prevBlock.proof;
-            currProof = currBlock.proof;
-            hash = currBlock.hashSelf();
-            if(hash.substr(0,3) != DIFFICULTY_ZEROES)
-                return false;
-            prevBlock = currBlock;
-        }
-        return true;
+    isValid: function(){
+        return isValidChain(this.chain);
     },
     getLastBlock: function(){ 
         if(this.chain.length == 0)
             return null;
         return this.chain[this.chain.length -1] 
     },
-    createBlock: function(transactions, proof, prevHash){
+    createBlock: function(transactions, proof, prevHash, length){
         if(transactions.length > MAX_TRANSACTIONS)
             throw new Error("Max transaction size reached");
-        const newBlock = new Block(this.chain.length+1, Date.now().toString(), transactions, proof, prevHash);
+        const newBlock = new Block(length+1, Date.now().toString(), transactions, proof, prevHash);
         return newBlock;
     },
     copyBlock: function({transactions, timestamp, proof, prevHash}){
@@ -150,17 +105,23 @@ const blockchain = {
         }
         return true;
     },
-    receiveUpdate: function(blockchain, messageObject){
-        const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
-        console.log(message !== null, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken);
-        console.log('Message received in receive update');
-        const newChain = JSON.parse(message.description);
-        console.log(newChain, typeof newChain, newChain.length, blockchain.chain)
-        console.log(newChain.length, blockchain.chain.length);
-        if(newChain.length > blockchain.chain.length){
-            console.log('Copying chain');
-            block.copyChain(newChain)
-            console.log('Copied chain');
+    receiveUpdate: function(messageObject){
+        try{
+            console.log('Message received in receive update');
+            let blockchain = this;
+            const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
+            console.log(message !== null, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken);
+
+            const newChain = JSON.parse(message.description);
+            // Copy newly published chain only if it is greater than own chain
+            if(newChain.length > blockchain.chain.length){
+                console.log('Copying chain');
+                blockchain.copyChain(newChain)
+                console.log('Copied chain');
+            }
+        }catch(e){
+            console.log(e);
+            console.log('Something weird happened when received new blockchain !');
         }
     },
     mineBlock: function(){
@@ -187,11 +148,17 @@ const blockchain = {
                 amount: 0.5,
                 fee: 0.00
             });
-            console.log('Before sending, length of chain: ',this.chain.length)
-            this.pubsub.publish({
+
+            this.blockchainPubsub.publish({
                 titile: "New block", 
                 description: JSON.stringify(this.chain)
-            });                
+            })
+            .then(response => {})
+            .catch(err => {
+                console.log(err);
+                console.log('Something wrong happened while publishing newly mined chain !');
+            });
+
             return this.getLastBlock().number;
         }catch(e){
             console.log(e);
@@ -200,76 +167,23 @@ const blockchain = {
         }
     },
     proofOfWork: function(transactions, prevHash){
-        let newNonce = 0;
-        let isValidProof = false;
-        let currentBlock = null;
-        while(!isValidProof){
-            currentBlock = this.createBlock(transactions, newNonce, prevHash);
-            if(currentBlock.hashSelf().substr(0, 3) == DIFFICULTY_ZEROES)
-                isValidProof = true
-            else{
-                // Simplest computation
-                newNonce += 1;           
-
-                // Get newProof as its increment or some random value, this makes it jump way across and get very random proofs
-                // newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(999999999));        
-
-                // Get very random proofs in larger range
-                // newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(Number.MAX_SAFE_INTEGER));       
-            }
-        }
-        return currentBlock;
+        return pow(transactions, prevHash, this.createBlock, this.chain.length);
     },
     addTransaction: function({sender, receiver, fee, amount}){
         let newTransaction = new Transaction(sender, receiver, amount, fee);
-        if(!newTransaction.isValid())
-            return -1;
+        if(!newTransaction.isValid()) return -1;
         this.mempool.push(newTransaction);
         return newTransaction.id;
-    },
-    addNode: function(address){
-        this.nodes.add(address);
-    },
-    syncChain: async function(){
-        let selfChain = this.chain;
-        let maxLen = this.chain.length;
-        let biggerChain  = undefined;
-        try{
-            for(let node of this.nodes){
-                const url = new URL(node);
-                try{
-                    const response = await axios.get(`http://${url.hostname}:${url.port}/blockchain`);
-                    if(response.data.length > maxLen){
-                        maxLen = response.data.length;
-                        biggerChain = response.data.chain;
-                    }
-                }catch(err){
-                    // Handles situations when the concerned node is offline, this is very common scenario, hence not logged
-                }finally{
-                    continue;
-                }
-            }
-            if(biggerChain){
-                this.copyChain(biggerChain);
-                console.log("Blockchain synced -\\-")
-                return true;
-            }
-        }catch(err){
-            console.error(err);
-            console.log("Error occured while syncing blockchain from other nodes.Not a network issue !");
-            return false;
-        }
-        return false;
     },
     syncMempool: async function(){
         return false;
     }
 }
 try{
-    // blockchain.publishChanges = (new PubSub(blockchain.receiveUpdate , [CHANNELS.OPCOIN])).publish;
-    blockchain.pubsub.addListener(blockchain.receiveUpdate.bind(blockchain));
+    blockchain.init();
 }catch(e){
-    console.log("Something weird");
+    console.log(e)
+    console.log("Something weird happened while intitializing");
 }
 // Blockchain initializer
 const initTransactions = [
@@ -286,16 +200,8 @@ for(let transaction of initTransactions)
     blockchain.mempool.push(new Transaction(...transaction));
 for(let transaction of initTransactions)
     blockchain.mempool.push(new Transaction(...transaction));
-// console.log("Mempool:\n", blockchain.mempool);
-// console.log("Blockchain:\n", blockchain.getChain());
-// console.log("Blockchain validity:", blockchain.isValid());
-// blockchain.mineBlock();
-// blockchain.addNode('http://localhost:5001/');
-// blockchain.addNode('http://localhost:5002/');
-// console.log(await blockchain.syncChain());
-// console.log(await blockchain.syncChain());
-
-if(process.env.NODE_ENV !== 'production')
+    
+if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
     for(let i=0; i<4; i++)    blockchain.mineBlock();
 
 export default blockchain;

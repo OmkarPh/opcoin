@@ -21,7 +21,6 @@ const Header = () => {
         <Nav className="mr-auto ml-10">
         <Button as={Link} to="/blockchain">Blockchain</Button>
         <Button as={Link} to="/transactions">Transactions</Button>
-        <Button as={Link} to="/nodes">Nodes</Button>
         <NavDropdown title="Utilities" id="collasible-nav-dropdown">
             <NavDropdown.Item href="#action/3.1">Mempool history</NavDropdown.Item>
             <NavDropdown.Item href="#action/3.2">Block details</NavDropdown.Item>

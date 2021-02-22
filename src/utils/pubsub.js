@@ -7,7 +7,8 @@ const pubnubCredentials = {
     secretKey: process.env.SECRET_KEY
 };
 const CHANNELS = {
-    OPCOIN: 'OPCOIN'
+    OPCOIN: 'OPCOIN',
+    OPCOIN_MEMPOOL: 'OPCOIN_MEMPOOL:'
 }
 
 class PubSub{
@@ -15,16 +16,24 @@ class PubSub{
         try{
             this.pubnub = new PubNub(pubnubCredentials);
             this.pubnub.subscribe({channels: Object.values(channels)});
+            this.myPublishIds = new Set();
         }catch(err){
             console.log(err);
             console.log('Some error occured while initializing PubNub in PubSub.js');
         }
     }
+
     addListener(listener){
         this.pubnub.addListener({
-            message: listener
+            message: msgObject => {
+                // Prevent repetition 
+                if(this.myPublishIds.has(msgObject.timetoken))
+                    return;
+                listener(msgObject);
+            }
         });
     }
+
     publish(message="Ping", channel=CHANNELS.OPCOIN){
         if(typeof message === 'object'){
             if(!message.title)
@@ -32,12 +41,15 @@ class PubSub{
             if(!message.description)
                 message.description = "Ping success OK";
         }
-        try{
-            this.pubnub.publish({channel, message});
-        }catch(err){
-            console.log(err);
-            console.log('Some error occured while publishing message in PubSub');
-        }
+        return new  Promise((resolve, reject)=>{
+            this.pubnub.publish({channel, message})
+                .then(response => {
+                    // Add newly published token to set for preventing repetition
+                    this.myPublishIds.add(response.timetoken);
+                    resolve(response);
+                })
+                .catch(reject);
+        });
     }
 }
 

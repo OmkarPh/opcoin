@@ -10,27 +10,7 @@ import queryString from 'query-string';
 
 import Pagination from '../components/Pagination';
 
-const fillRemainingRows = (actualLength) => {
-    const remainingRows = [];
-    if(actualLength < process.env.REACT_APP_ENTRIES_PER_PAGE){
-        for(let i=0; i<(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength); i++){
-            console.log(i)
-            remainingRows.push(
-                <tr key={i}>
-                    <td>{<br/>}</td>
-                    <td>{}</td>
-                    <td>{}</td>
-                    <td>{}</td>
-                    <td>{} </td> {""}
-                    <td className="fa-ellipsis-h">{}</td>
-                </tr>
-            );
-        }
-    }
-    console.log(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength, remainingRows);
-    return remainingRows;
-}
-
+import fillRemainingRows from '../utility/remainingRows.js';
 
 const Blockchain = (props) => {
 
@@ -120,8 +100,10 @@ const Blockchain = (props) => {
                                         )
                                     })
                                 }
+                                { 
+                                    fillRemainingRows(blockchain.chain.length)
+                                }
                             </tbody>
-                            { fillRemainingRows(blockchain.chain.length)}
                             </Table>
                             <Pagination page={page} setPage={setPage} pagination={pagination} />
                     </div> 
