@@ -10,7 +10,7 @@ import hashedChain from './utils/hashedChain.js';
 
 // PubSub networking utitlity
 import PubSub from './utils/pubsub.js';
-import {CHANNELS} from './utils/pubsub.js';
+import {CHANNELS, KEYWORDS} from './utils/pubsub.js';
 
 
 // Constants
@@ -20,6 +20,7 @@ import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTAN
 import Block from './classes/Block.js';
 import Transaction from './classes/Transaction.js';
 
+
 // Major object
 const blockchain = {
     chain: [],
@@ -27,8 +28,32 @@ const blockchain = {
     nodeAddress: uuidv4().replace('-',''),
     blockchainPubsub: new PubSub([CHANNELS.OPCOIN]),
     mempoolPubsub: new PubSub([CHANNELS.OPCOIN_MEMPOOL]),
+    newNodePubsub: new PubSub([CHANNELS.NEW_NODE_REQUESTS]),
     init: function(){
-        this.blockchainPubsub.addListener(this.receiveUpdate.bind(this));
+        this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
+        this.newNodePubsub.addListener(msgObject=>{
+            console.log('Publishing the chain to needies ', msgObject);
+            this.newNodePubsub.publish({
+                title: "Init chain", 
+                description: this.chain
+            }, CHANNELS.NEW_NODE_RESPONSES);
+        })
+        
+        // Asking for init blockchain 
+        this.newNodePubsub.publish(KEYWORDS.REQUEST_INIT_CHAIN, CHANNELS.NEW_NODE_REQUESTS);
+
+        // Subscribe to new node responses
+        let tempPubsub = new PubSub([CHANNELS.NEW_NODE_RESPONSES])
+        tempPubsub.addListener(this.receiveUpdatedChain.bind(this));
+
+
+        // Listening to responses for 1 minute and then unsubscribe to init chain
+        setTimeout(()=>{
+            console.log('Unsubscribing and terminating init process');
+            if(tempPubsub)
+                tempPubsub.unsubscribeAll();            
+        }, 10000)
+
     },
     getLength: function(){ 
         return this.chain.length;
@@ -71,8 +96,9 @@ const blockchain = {
     getChainWithHashes: function(page){
         return hashedChain(page, this.chain);
     },
-    isValid: function(){
-        return isValidChain(this.chain);
+    isValid: function(chainToValidate){
+        if(!chainToValidate)    chainToValidate = this.chain;
+        return isValidChain(chainToValidate);
     },
     getLastBlock: function(){ 
         if(this.chain.length == 0)
@@ -91,13 +117,18 @@ const blockchain = {
     },
     copyChain: function(newChain){
         if(newChain == null || newChain.length == 0)    return false;
-        let oldChain = this.chain;
-        this.chain = [];
+        // let oldChain = this.chain;
+        let tempChain = [];
         try{
-            for(let {transactions, timestamp, proof, prevHash} of newChain){
-                const newBlock = new Block(this.chain.length+1, timestamp, transactions, proof, prevHash);
-                this.chain.push(newBlock);
+            for(let {timestamp, transactions, nonce, prevHash} of newChain){
+                const newBlock = new Block(tempChain.length+1, timestamp, transactions, nonce, prevHash);
+                tempChain.push(newBlock);
             }
+            if(isValidChain(tempChain)){
+                this.chain = tempChain;
+                return true;
+            }
+            return false;
         }catch(e){
             console.error("Error ocurred while copying new synced chain!!");
             console.error(e);
@@ -105,19 +136,14 @@ const blockchain = {
         }
         return true;
     },
-    receiveUpdate: function(messageObject){
+    receiveUpdatedChain: function(newChain){
+        console.log('Received new chain', newChain);
         try{
-            console.log('Message received in receive update');
             let blockchain = this;
-            const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
-            console.log(message !== null, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken);
 
-            const newChain = JSON.parse(message.description);
             // Copy newly published chain only if it is greater than own chain
             if(newChain.length > blockchain.chain.length){
-                console.log('Copying chain');
                 blockchain.copyChain(newChain)
-                console.log('Copied chain');
             }
         }catch(e){
             console.log(e);
@@ -150,10 +176,9 @@ const blockchain = {
             });
 
             this.blockchainPubsub.publish({
-                titile: "New block", 
-                description: JSON.stringify(this.chain)
+                title: "New block", 
+                description: this.chain
             })
-            .then(response => {})
             .catch(err => {
                 console.log(err);
                 console.log('Something wrong happened while publishing newly mined chain !');
@@ -179,6 +204,7 @@ const blockchain = {
         return false;
     }
 }
+
 try{
     blockchain.init();
 }catch(e){
@@ -202,6 +228,6 @@ for(let transaction of initTransactions)
     blockchain.mempool.push(new Transaction(...transaction));
     
 if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
-    for(let i=0; i<4; i++)    blockchain.mineBlock();
+    for(let i=0; i<2; i++)    blockchain.mineBlock();
 
 export default blockchain;

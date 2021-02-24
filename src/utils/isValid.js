@@ -18,6 +18,7 @@ const isValid = (chain) => {
         hash = currBlock.hashSelf();
         if(hash.substr(0,3) != DIFFICULTY_ZEROES)
             return false;
+        
         prevBlock = currBlock;
     }
     return true;

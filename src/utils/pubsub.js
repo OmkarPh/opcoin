@@ -6,9 +6,16 @@ const pubnubCredentials = {
     subscribeKey: process.env.SUB_KEY,
     secretKey: process.env.SECRET_KEY
 };
+
+const KEYWORDS = {
+    REQUEST_INIT_CHAIN: 'REQUEST_INIT_CHAIN'
+}
+
 const CHANNELS = {
     OPCOIN: 'OPCOIN',
-    OPCOIN_MEMPOOL: 'OPCOIN_MEMPOOL:'
+    OPCOIN_MEMPOOL: 'OPCOIN_MEMPOOL:',
+    NEW_NODE_REQUESTS: 'NEW_NODE_REQUESTS',
+    NEW_NODE_RESPONSES: 'NEW_NODE_RESPONSES'
 }
 
 class PubSub{
@@ -17,6 +24,7 @@ class PubSub{
             this.pubnub = new PubNub(pubnubCredentials);
             this.pubnub.subscribe({channels: Object.values(channels)});
             this.myPublishIds = new Set();
+            this.defaultChannel = channels[0];
         }catch(err){
             console.log(err);
             console.log('Some error occured while initializing PubNub in PubSub.js');
@@ -26,15 +34,28 @@ class PubSub{
     addListener(listener){
         this.pubnub.addListener({
             message: msgObject => {
+                // const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
+
                 // Prevent repetition 
                 if(this.myPublishIds.has(msgObject.timetoken))
                     return;
-                listener(msgObject);
+                
+
+                if(typeof msgObject.message === 'string')
+                    listener(msgObject.message);
+                else
+                    listener(msgObject.message.description);
             }
         });
     }
 
-    publish(message="Ping", channel=CHANNELS.OPCOIN){
+    unsubscribeAll(){
+        this.pubnub.unsubscribeAll();
+    }
+
+
+
+    publish(message="Ping", channel=this.defaultChannel){
         if(typeof message === 'object'){
             if(!message.title)
                 message.title = "Ping";
@@ -54,6 +75,7 @@ class PubSub{
 }
 
 export {
-    CHANNELS
+    CHANNELS,
+    KEYWORDS
 }
 export default PubSub;
