@@ -8,13 +8,18 @@ import pow from './utils/pow.js'
 import isValidChain from './utils/isValid.js';
 import hashedChain from './utils/hashedChain.js';
 
+
+// File-based caching
+import flatCache from 'flat-cache';
+const cache = flatCache.load('majorcache');
+
 // PubSub networking utitlity
 import PubSub from './utils/pubsub.js';
 import {CHANNELS, KEYWORDS} from './utils/pubsub.js';
 
 
 // Constants
-import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
+import { INIT_LISTEN, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
 
 // Classes
 import Block from './classes/Block.js';
@@ -30,6 +35,10 @@ const blockchain = {
     mempoolPubsub: new PubSub([CHANNELS.OPCOIN_MEMPOOL]),
     newNodePubsub: new PubSub([CHANNELS.NEW_NODE_REQUESTS]),
     init: function(){
+        // cache.setKey('blockchain', this.chain);
+        // cache.save(true);
+        this.receiveUpdatedChain(cache.getKey('blockchain'));
+
         this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
         this.newNodePubsub.addListener(msgObject=>{
             console.log('Publishing the chain to needies ', msgObject);
@@ -52,7 +61,7 @@ const blockchain = {
             console.log('Unsubscribing and terminating init process');
             if(tempPubsub)
                 tempPubsub.unsubscribeAll();            
-        }, 10000)
+        }, INIT_LISTEN);
 
     },
     getLength: function(){ 
@@ -126,6 +135,9 @@ const blockchain = {
             }
             if(isValidChain(tempChain)){
                 this.chain = tempChain;
+                // Storing updated chain into cache
+                cache.setKey('blockchain', this.chain);
+                cache.save();
                 return true;
             }
             return false;
@@ -137,14 +149,19 @@ const blockchain = {
         return true;
     },
     receiveUpdatedChain: function(newChain){
-        console.log('Received new chain', newChain);
         try{
             let blockchain = this;
+            if(!newChain)   return;
 
             // Copy newly published chain only if it is greater than own chain
             if(newChain.length > blockchain.chain.length){
-                blockchain.copyChain(newChain)
-            }
+                if(blockchain.copyChain(newChain))
+                    console.log('Copied newly published chain of length', newChain.length);
+                else
+                    console.log('Received an invalid newly published chain of length', newChain.length);
+            }else
+                console.log('Received a shorter newly published chain of length', newChain.length);
+            
         }catch(e){
             console.log(e);
             console.log('Something weird happened when received new blockchain !');
@@ -164,6 +181,10 @@ const blockchain = {
             else
                 this.chain.push(this.proofOfWork(transactions, lastBlock.hashSelf()));
             
+            // Storing chain into cache
+            cache.setKey('blockchain', this.chain);
+            cache.save();
+
             // Remove mined transactions
             this.mempool.splice(0, transactions.length);
             

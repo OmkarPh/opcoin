@@ -49,6 +49,14 @@ const Blockchain = (props) => {
         return ()=>{}
     },[page]);
     
+    useEffect(()=>{
+        const syncInterval = setInterval(()=>{
+            syncChain(false);
+        }, process.env.REACT_APP_SYNC_DURATION || 30000);
+        return ()=>{
+            clearInterval(syncInterval);
+        }
+    }, []);
 
     return (
         <Container>

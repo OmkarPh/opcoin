@@ -12,6 +12,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
   },
+  "jest":{
+    "testEnvironment": "node"
+  },
   "nodemonConfig": {
     "ignore": [
       "frontend/*"
@@ -28,7 +31,9 @@
     "connect-slashes": "^1.4.0",
     "cookie-parser": "^1.4.5",
     "dotenv": "^8.2.0",
+    "elliptic": "^6.5.4",
     "express": "^4.17.1",
+    "flat-cache": "^3.0.4",
     "localtunnel": "^2.0.1",
     "pubnub": "^4.29.11",
     "slashes": "^2.0.2",

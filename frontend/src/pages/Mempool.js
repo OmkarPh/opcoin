@@ -10,27 +10,7 @@ import queryString from 'query-string';
 
 import Pagination from '../components/Pagination';
 
-const fillRemainingRows = (actualLength) => {
-    const remainingRows = [];
-    if(actualLength < process.env.REACT_APP_ENTRIES_PER_PAGE){
-        for(let i=0; i<(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength); i++){
-            console.log(i)
-            remainingRows.push(
-                <tr key={i}>
-                    <td>{<br/>}</td>
-                    <td>{}</td>
-                    <td>{}</td>
-                    <td>{}</td>
-                    <td>{} </td> {""}
-                    <td className="fa-ellipsis-h">{}</td>
-                </tr>
-            );
-        }
-    }
-    // console.log(process.env.REACT_APP_ENTRIES_PER_PAGE -)
-    console.log(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength, remainingRows);
-    return remainingRows;
-}
+import fillRemainingRows from '../utility/remainingRows.js';
 
 const Mempool = (props) => {
     let params = queryString.parse(props.location.search);
@@ -68,6 +48,14 @@ const Mempool = (props) => {
         return ()=>{}
     },[page]);
 
+    useEffect(()=>{
+        const syncInterval = setInterval(()=>{
+            syncMempool(false);
+        }, process.env.REACT_APP_SYNC_DURATION || 30000);
+        return ()=>{
+            clearInterval(syncInterval);
+        }
+    }, []);
 
 
     return (

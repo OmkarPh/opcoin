@@ -65,11 +65,10 @@ app.listen(PORT, ()=> {
 // Routes
 
 // Administration routes
-import admin from './Routes/admin.js';
+import wallet from './Routes/wallet.js';
 import blockchain from './Routes/blockchain.js';
 import axios from 'axios';
-app.use(admin);
-app.use('/api', blockchain);
+app.use('/api', blockchain, wallet);
 
 
 

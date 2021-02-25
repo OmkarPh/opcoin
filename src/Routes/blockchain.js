@@ -1,16 +1,6 @@
 import express from 'express';
 const router = new express.Router();
 
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-
-
-// Utility modules
-import hasher from '../utils/hash.js';
-
-// Constants
-import { DIFFICULTY_ZEROES, MAX_TRANSACTIONS } from '../CONSTANTS/index.js';
-
 // Major blockchain
 import blockchain from '../blockchain.js';
 import Transaction from '../classes/Transaction.js';
