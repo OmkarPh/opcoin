@@ -5,21 +5,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-// GLobal dependencies
+// Other dependencies
 import express from 'express';
 import localtunnel from 'localtunnel';
+import axios from 'axios';
 import slashes from 'connect-slashes';       // To remove or add trailing slash at end of request url
-
-
-
-
-// Setup
-import hasher from './utils/hash.js';
 
 
 // Fetching constants
 import { PORT, SUBDOMAIN, EXPOSE_GLOBALLY } from './CONSTANTS/index.js';
-
 
 
 // Setting up the server
@@ -27,8 +21,6 @@ const app = express();
 app.use(express.json()) 
 app.use(express.urlencoded({ extended: true })) 
 app.use(slashes(false));
-
-
 
 app.listen(PORT, ()=> {
     console.log(`Server is up and running on port ${PORT}`);
@@ -42,12 +34,10 @@ app.listen(PORT, ()=> {
             console.log(`Node exposed globally: ${tunnel.url}`);
         if(err)
             console.log(`Some error occured during exposing node globally: `, err);
-        // console.log(tunnel.opts);    // console.log(tunnel.tunnelCluster.opts);    // Debug statements
 
         // Bypass tactic:
         axios.get(`${tunnel.url}/responses/ping`, (res)=>console.log(res.data));
     });
-
     tunnel.on('close', ()=>{
         console.log(`Tunnel ${tunnel.url} listening to local port ${tunnel.tunnelCluster.opts.local_port} closed !`);
     });
@@ -56,35 +46,19 @@ app.listen(PORT, ()=> {
 
 
 
-
-
-
-
-
-
 // Routes
-
-// Administration routes
 import wallet from './Routes/wallet.js';
 import blockchain from './Routes/blockchain.js';
-import axios from 'axios';
 app.use('/api', blockchain, wallet);
 
 
 
 
-
-
-
-
-
 // Misc Pages
-
 // Ping response for keeping site awake
 app.get('/responses/ping', (req, res)=>{
     res.status(200).send('-- ok --');
 });
-
 
 
 // Serve react from build directory when in production
@@ -93,14 +67,14 @@ if(process.env.NODE_ENV === 'production'){
     app.get('*', (req, res)=>{
         res.sendFile(path.resolve(__dirname, '..','frontend', 'build', 'index.html'));
     });
-}else{
-    // 404 pages for development
-
-    app.get('/404',(req,res)=>{
-        res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
-    });
-    app.get('*', (req, res)=>{
-        res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
-    });
 }
 
+
+
+// 404 pages for development
+app.get('/404',(req,res)=>{
+    res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
+});
+app.get('*', (req, res)=>{
+    res.status(404).send("Page not found :(  <br> ¯\\_(ツ)_/¯");
+});

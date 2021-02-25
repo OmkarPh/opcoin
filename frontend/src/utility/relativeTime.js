@@ -13,8 +13,7 @@ const units = {
     d1 = parseInt(d1);
     var elapsed = d1 - d2
     if(!elapsed) elapsed = 0;
-    // console.log("Inside getRelative", d1  , d2.getTime(), d1-2, elapsed);
-    // "Math.abs" accounts for both "past" & "future" scenarios
+    
     for (var u in units) 
       if (Math.abs(elapsed) > units[u] || u == 'second') 
         return rtf.format(Math.round(elapsed/units[u]), u)

@@ -4,20 +4,17 @@ function proofOfWork(transactions, prevHash, createBlockFn, length){
     let newNonce = 0;
     let isValidProof = false;
     let currentBlock = null;
-    while(!isValidProof){
+    
+    while(!isValidProof){    
+        // Create New blocks repeatedly
         currentBlock = createBlockFn(transactions, newNonce, prevHash, length);
+
+        // If hash meets difficulty criteria, eligibl block is obtained, End the loop
         if(currentBlock.hashSelf().substr(0, 3) == DIFFICULTY_ZEROES)
             isValidProof = true
-        else{
-            // Simplest computation
-            newNonce += 1;           
-
-            // Get newProof as its increment or some random value, this makes it jump way across and get very random proofs
-            // newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(999999999));        
-
-            // Get very random proofs in larger range
-            // newProof = Math.random() < 0.5 ? newProof+1 : Math.floor(Math.random() * Math.floor(Number.MAX_SAFE_INTEGER));       
-        }
+        else
+            newNonce += 1;      // Keep incrementing nonce           
+        
     }
     return currentBlock;
 }

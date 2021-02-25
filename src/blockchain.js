@@ -1,9 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'Nope';       // Bypass localtunnel interceptor
 
 // Utility modules
-import hasher from './utils/hash.js';
 import pow from './utils/pow.js'
 import isValidChain from './utils/isValid.js';
 import hashedChain from './utils/hashedChain.js';
@@ -27,52 +24,55 @@ import Transaction from './classes/Transaction.js';
 
 
 // Major object
-const blockchain = {
-    chain: [],
-    mempool: [],
-    nodeAddress: uuidv4().replace('-',''),
-    blockchainPubsub: new PubSub([CHANNELS.OPCOIN]),
-    mempoolPubsub: new PubSub([CHANNELS.OPCOIN_MEMPOOL]),
-    newNodePubsub: new PubSub([CHANNELS.NEW_NODE_REQUESTS]),
-    init: function(){
-        // cache.setKey('blockchain', this.chain);
-        // cache.save(true);
-        this.receiveUpdatedChain(cache.getKey('blockchain'));
+class Blockchain{
+    constructor(){
+        this.chain = [];
+        this.mempool = [];
+        this.nodeAddress = uuidv4().replace('-','');
+        try{
+            this.blockchainPubsub = new PubSub([CHANNELS.OPCOIN]);
+            this.mempoolPubsub = new PubSub([CHANNELS.OPCOIN_MEMPOOL]);
+            this.newNodePubsub = new PubSub([CHANNELS.NEW_NODE_REQUESTS]);
+            this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
+            
+            // Retrieve blockchain from previous boot up
+            this.receiveUpdatedChain(cache.getKey('blockchain'));
+            
+            // Add temporary listener and request blockchain updates
+            this.newNodePubsub.addListener(msgObject=>{
+                console.log('Publishing the chain to needies ', msgObject);
+                this.newNodePubsub.publish({
+                    title: "Init chain", 
+                    description: this.chain
+                }, CHANNELS.NEW_NODE_RESPONSES);
+            })
+            this.newNodePubsub.publish(KEYWORDS.REQUEST_INIT_CHAIN, CHANNELS.NEW_NODE_REQUESTS);
 
-        this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
-        this.newNodePubsub.addListener(msgObject=>{
-            console.log('Publishing the chain to needies ', msgObject);
-            this.newNodePubsub.publish({
-                title: "Init chain", 
-                description: this.chain
-            }, CHANNELS.NEW_NODE_RESPONSES);
-        })
-        
-        // Asking for init blockchain 
-        this.newNodePubsub.publish(KEYWORDS.REQUEST_INIT_CHAIN, CHANNELS.NEW_NODE_REQUESTS);
+            // Subscribe to new node responses
+            let tempPubsub = new PubSub([CHANNELS.NEW_NODE_RESPONSES])
+            tempPubsub.addListener(this.receiveUpdatedChain.bind(this));
 
-        // Subscribe to new node responses
-        let tempPubsub = new PubSub([CHANNELS.NEW_NODE_RESPONSES])
-        tempPubsub.addListener(this.receiveUpdatedChain.bind(this));
+            // Listening to responses for {INIT_LISTEN} time period and then unsubscribe to init chain
+            setTimeout(()=>{
+                console.log('Unsubscribing and terminating init process');
+                if(tempPubsub)
+                    tempPubsub.unsubscribeAll();            
+            }, INIT_LISTEN);
 
-
-        // Listening to responses for 1 minute and then unsubscribe to init chain
-        setTimeout(()=>{
-            console.log('Unsubscribing and terminating init process');
-            if(tempPubsub)
-                tempPubsub.unsubscribeAll();            
-        }, INIT_LISTEN);
-
-    },
-    getLength: function(){ 
+        }catch(e){
+            console.log(e)
+            console.log("Something weird happened while creating Blockchain object");
+        }
+    }
+    getLength(){ 
         return this.chain.length;
-    },
-    getChain: async function(){
+    }
+    getChain(){
         if(this.chain.length == 0)
             return [];
         return  this.chain; 
-    },
-    getMempool: function(page){
+    }
+    getMempool(page){
         let len = this.mempool.length;
         if(len <= ENTRIES_PER_PAGE || !page)
             return  {
@@ -101,33 +101,30 @@ const blockchain = {
             maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
             mempool: this.mempool.slice(startIndex, endIndex)
         };
-    },
-    getChainWithHashes: function(page){
+    }
+    getChainWithHashes(page){
         return hashedChain(page, this.chain);
-    },
-    isValid: function(chainToValidate){
+    }
+    isValid(chainToValidate){
         if(!chainToValidate)    chainToValidate = this.chain;
         return isValidChain(chainToValidate);
-    },
-    getLastBlock: function(){ 
+    }
+    getLastBlock(){ 
         if(this.chain.length == 0)
             return null;
         return this.chain[this.chain.length -1] 
-    },
-    createBlock: function(transactions, proof, prevHash, length){
+    }
+    createBlock(transactions, proof, prevHash, length){
         if(transactions.length > MAX_TRANSACTIONS)
             throw new Error("Max transaction size reached");
         const newBlock = new Block(length+1, Date.now().toString(), transactions, proof, prevHash);
         return newBlock;
-    },
-    copyBlock: function({transactions, timestamp, proof, prevHash}){
-        const newBlock = new Block(this.chain.length+1, timestamp, transactions, proof, prevHash);
-        this.chain.push(newBlock);
-    },
-    copyChain: function(newChain){
+    }
+    copyChain(newChain){
         if(newChain == null || newChain.length == 0)    return false;
-        // let oldChain = this.chain;
+        
         let tempChain = [];
+
         try{
             for(let {timestamp, transactions, nonce, prevHash} of newChain){
                 const newBlock = new Block(tempChain.length+1, timestamp, transactions, nonce, prevHash);
@@ -135,9 +132,11 @@ const blockchain = {
             }
             if(isValidChain(tempChain)){
                 this.chain = tempChain;
+
                 // Storing updated chain into cache
                 cache.setKey('blockchain', this.chain);
                 cache.save();
+
                 return true;
             }
             return false;
@@ -146,9 +145,8 @@ const blockchain = {
             console.error(e);
             return false;
         }
-        return true;
-    },
-    receiveUpdatedChain: function(newChain){
+    }
+    receiveUpdatedChain(newChain){
         try{
             let blockchain = this;
             if(!newChain)   return;
@@ -166,8 +164,8 @@ const blockchain = {
             console.log(e);
             console.log('Something weird happened when received new blockchain !');
         }
-    },
-    mineBlock: function(){
+    }
+    mineBlock(){
         if(this.mempool.length == 0)
             return 0;
 
@@ -211,27 +209,24 @@ const blockchain = {
             console.log("Max transactions reached !!");
             return -1;
         }
-    },
-    proofOfWork: function(transactions, prevHash){
+    }
+    proofOfWork(transactions, prevHash){
         return pow(transactions, prevHash, this.createBlock, this.chain.length);
-    },
-    addTransaction: function({sender, receiver, fee, amount}){
+    }
+    addTransaction({sender, receiver, fee, amount}){
         let newTransaction = new Transaction(sender, receiver, amount, fee);
         if(!newTransaction.isValid()) return -1;
         this.mempool.push(newTransaction);
         return newTransaction.id;
-    },
-    syncMempool: async function(){
+    }
+    syncMempool(){
         return false;
     }
 }
 
-try{
-    blockchain.init();
-}catch(e){
-    console.log(e)
-    console.log("Something weird happened while intitializing");
-}
+
+const blockchain = new Blockchain();
+
 // Blockchain initializer
 const initTransactions = [
     ["gp", "op", 34, 0.0005],
@@ -243,11 +238,12 @@ const initTransactions = [
     ["pp", "op", 69, 0.062],
     ["pp", "op", 300, 1.052],
 ];
-for(let transaction of initTransactions)
-    blockchain.mempool.push(new Transaction(...transaction));
-for(let transaction of initTransactions)
-    blockchain.mempool.push(new Transaction(...transaction));
-    
+
+for(let [sender, receiver, amount, fee] of initTransactions)
+    blockchain.addTransaction({sender, receiver, amount, fee});
+for(let [sender, receiver, amount, fee] of initTransactions)
+    blockchain.addTransaction({sender, receiver, amount, fee});
+
 if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
     for(let i=0; i<2; i++)    blockchain.mineBlock();
 

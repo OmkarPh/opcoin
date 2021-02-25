@@ -7,10 +7,11 @@ const pubnubCredentials = {
     secretKey: process.env.SECRET_KEY
 };
 
+
+// Useful for input-consistency across modules
 const KEYWORDS = {
     REQUEST_INIT_CHAIN: 'REQUEST_INIT_CHAIN'
 }
-
 const CHANNELS = {
     OPCOIN: 'OPCOIN',
     OPCOIN_MEMPOOL: 'OPCOIN_MEMPOOL:',
@@ -34,6 +35,8 @@ class PubSub{
     addListener(listener){
         this.pubnub.addListener({
             message: msgObject => {
+
+                // Fields of message Object for reference:
                 // const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
 
                 // Prevent repetition 
@@ -53,8 +56,6 @@ class PubSub{
         this.pubnub.unsubscribeAll();
     }
 
-
-
     publish(message="Ping", channel=this.defaultChannel){
         if(typeof message === 'object'){
             if(!message.title)
@@ -65,7 +66,7 @@ class PubSub{
         return new  Promise((resolve, reject)=>{
             this.pubnub.publish({channel, message})
                 .then(response => {
-                    // Add newly published token to set for preventing repetition
+                    // Add newly published token to the self-publishes-set for preventing repetition
                     this.myPublishIds.add(response.timetoken);
                     resolve(response);
                 })
@@ -78,4 +79,5 @@ export {
     CHANNELS,
     KEYWORDS
 }
+
 export default PubSub;

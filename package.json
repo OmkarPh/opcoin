@@ -1,7 +1,7 @@
 {
-  "name": "blockchain",
-  "version": "1.0.0",
-  "description": "",
+  "name": "opcoin",
+  "version": "1.2.0",
+  "description": "A P2P crypto currency and blockchain built right from scratch with Node.js(Daemon) and React(UI)",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

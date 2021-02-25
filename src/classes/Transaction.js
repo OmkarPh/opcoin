@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-// import hasher from '../utils/hash.js';
+import hasher from '../utils/hash.js';
 
 export default class Transaction{
     constructor(sender, receiver, amount, fee){
@@ -16,6 +16,8 @@ export default class Transaction{
     static sortDescending(t1, t2){
         return t2.fee - t1.fee
     }
+
+    // TODO
     isValid(){
         for(let key of Object.keys(this))
             if(this[key] == null)

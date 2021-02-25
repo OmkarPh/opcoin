@@ -48,6 +48,8 @@ const Mempool = (props) => {
         return ()=>{}
     },[page]);
 
+    
+    // Sync chain from daemon at interval of time {REACT_APP_SYNC_DURATION}
     useEffect(()=>{
         const syncInterval = setInterval(()=>{
             syncMempool(false);

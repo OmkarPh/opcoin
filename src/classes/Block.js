@@ -11,7 +11,7 @@ export default class Block{
         this.prevHash = prevHash;
     }
     hashSelf(){
-        // console.log(JSON.stringify(this));
+        // Globally used hash function for verification
         return hasher(JSON.stringify(this));
     }
 }
