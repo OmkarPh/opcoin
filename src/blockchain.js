@@ -1,3 +1,5 @@
+import path from 'path';
+
 import { v4 as uuidv4 } from 'uuid';
 
 // Utility modules
@@ -8,7 +10,7 @@ import hashedChain from './utils/hashedChain.js';
 
 // File-based caching
 import flatCache from 'flat-cache';
-const cache = flatCache.load('majorcache');
+const cache = flatCache.load('blockchain', path.resolve('./.cache'));
 
 // PubSub networking utitlity
 import PubSub from './utils/pubsub.js';
@@ -22,16 +24,15 @@ import { INIT_LISTEN, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/ind
 import Block from './classes/Block.js';
 import Transaction from './classes/Transaction.js';
 
+import mempool from './mempool.js';
 
 // Major object
 class Blockchain{
     constructor(){
         this.chain = [];
-        this.mempool = [];
         this.nodeAddress = uuidv4().replace('-','');
         try{
             this.blockchainPubsub = new PubSub([CHANNELS.OPCOIN]);
-            this.mempoolPubsub = new PubSub([CHANNELS.OPCOIN_MEMPOOL]);
             this.newNodePubsub = new PubSub([CHANNELS.NEW_NODE_REQUESTS]);
             this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
             
@@ -54,7 +55,7 @@ class Blockchain{
 
             // Listening to responses for {INIT_LISTEN} time period and then unsubscribe to init chain
             setTimeout(()=>{
-                console.log('Unsubscribing and terminating init process');
+                console.log('Unsubscribing and terminating initialization response acceptance');
                 if(tempPubsub)
                     tempPubsub.unsubscribeAll();            
             }, INIT_LISTEN);
@@ -64,61 +65,33 @@ class Blockchain{
             console.log("Something weird happened while creating Blockchain object");
         }
     }
-    getLength(){ 
-        return this.chain.length;
+    getLength(){    
+        return this.chain.length
+    }
+    getBlock(blockNo){
+        if(this.chain.length == 0 || blockNo >= this.chain.length )      
+            return undefined;
+        return this.chain[blockNo];
     }
     getChain(){
-        if(this.chain.length == 0)
-            return [];
-        return  this.chain; 
-    }
-    getMempool(page){
-        let len = this.mempool.length;
-        if(len <= ENTRIES_PER_PAGE || !page)
-            return  {
-                page: 1,
-                length: len,
-                maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
-                mempool: this.mempool
-            };
-
-        let startIndex = ENTRIES_PER_PAGE * (page-1);
-        let endIndex = ENTRIES_PER_PAGE * page;
-        
-        // Both indices Out of bounds, in such case return as per ?page=1
-        if(startIndex<0 && endIndex<=0){
-            startIndex = 0;
-            endIndex = ENTRIES_PER_PAGE*1;
-            page = 1;
-        }
-
-        // If only endIndex is out of bound, then make it max
-        if(endIndex > len)  endIndex = len;
-
-        return {
-            page,
-            length: len,
-            maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
-            mempool: this.mempool.slice(startIndex, endIndex)
-        };
+        return  this.chain
     }
     getChainWithHashes(page){
-        return hashedChain(page, this.chain);
+        return hashedChain(page, this.chain)
     }
-    isValid(chainToValidate){
-        if(!chainToValidate)    chainToValidate = this.chain;
+    isValid(chainToValidate=this.chain){
+        // if(!chainToValidate)    chainToValidate = this.chain;
         return isValidChain(chainToValidate);
     }
     getLastBlock(){ 
-        if(this.chain.length == 0)
+        if(this.chain.length == 0)      
             return null;
         return this.chain[this.chain.length -1] 
     }
     createBlock(transactions, proof, prevHash, length){
         if(transactions.length > MAX_TRANSACTIONS)
             throw new Error("Max transaction size reached");
-        const newBlock = new Block(length+1, Date.now().toString(), transactions, proof, prevHash);
-        return newBlock;
+        return new Block(length, Date.now().toString(), transactions, proof, prevHash);
     }
     copyChain(newChain){
         if(newChain == null || newChain.length == 0)    return false;
@@ -166,33 +139,34 @@ class Blockchain{
         }
     }
     mineBlock(){
-        if(this.mempool.length == 0)
+        let mempoolArr = mempool.getMempoolObj();
+        if(mempoolArr.length == 0)
             return 0;
 
         // Target transactions with highest fees
-        let transactions = this.mempool.sort(Transaction.sortDescending).slice(0, MAX_TRANSACTIONS);
+        let transactions = mempoolArr.sort(Transaction.sortDescending).slice(0, MAX_TRANSACTIONS);
 
         try{
             let lastBlock = this.getLastBlock();
             if(lastBlock == null)
-                this.chain.push(this.proofOfWork(transactions, 0));
+                this.chain.push(pow(transactions, 0, this.createBlock, this.chain.length));
             else
-                this.chain.push(this.proofOfWork(transactions, lastBlock.hashSelf()));
+                this.chain.push(pow(transactions, lastBlock.hashSelf(), this.createBlock, this.chain.length));
             
             // Storing chain into cache
             cache.setKey('blockchain', this.chain);
             cache.save();
 
             // Remove mined transactions
-            this.mempool.splice(0, transactions.length);
+            mempool.removeTransactions(0, transactions.length);
             
             // Gift opcoins to miner
-            this.addTransaction({
-                sender: this.nodeAddress,
-                receiver: 'Omkar',
-                amount: 0.5,
-                fee: 0.00
-            });
+            // this.addTransaction({
+            //     sender: this.nodeAddress,
+            //     receiver: 'Omkar',
+            //     amount: 0.5,
+            //     fee: 0.00
+            // });
 
             this.blockchainPubsub.publish({
                 title: "New block", 
@@ -210,41 +184,9 @@ class Blockchain{
             return -1;
         }
     }
-    proofOfWork(transactions, prevHash){
-        return pow(transactions, prevHash, this.createBlock, this.chain.length);
-    }
-    addTransaction({sender, receiver, fee, amount}){
-        let newTransaction = new Transaction(sender, receiver, amount, fee);
-        if(!newTransaction.isValid()) return -1;
-        this.mempool.push(newTransaction);
-        return newTransaction.id;
-    }
-    syncMempool(){
-        return false;
-    }
 }
 
 
 const blockchain = new Blockchain();
-
-// Blockchain initializer
-const initTransactions = [
-    ["gp", "op", 34, 0.0005],
-    ["pp", "op", 9, 0.00002],
-    ["pp", "op", 3, 0.0002],
-    ["op", "gp", 67, 0.0015], 
-    ["op", "gp", 125, 0.525], 
-    ["op", "pp", 234, 0.845],
-    ["pp", "op", 69, 0.062],
-    ["pp", "op", 300, 1.052],
-];
-
-for(let [sender, receiver, amount, fee] of initTransactions)
-    blockchain.addTransaction({sender, receiver, amount, fee});
-for(let [sender, receiver, amount, fee] of initTransactions)
-    blockchain.addTransaction({sender, receiver, amount, fee});
-
-if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
-    for(let i=0; i<2; i++)    blockchain.mineBlock();
 
 export default blockchain;

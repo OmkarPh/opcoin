@@ -15,6 +15,7 @@ const Miner = () => {
         axios
         .post("/api/mineBlock")
         .then(res=>{
+            console.log(res);
             setTimeout(()=>{
                     setStatus(res.data.message);
                     setMining(false);
@@ -22,8 +23,9 @@ const Miner = () => {
             // setStatus(res.data.message);
             // setMining(false);
         }).catch(err=>{
-            console.log("Some problem occured while mining block !");
+            console.log(err)
             setMining(false);
+            setStatus('Some problem occured while communicating to servers');
         })
     }
 

@@ -114,7 +114,7 @@ const Mempool = (props) => {
                                         )
                                     })
                                 }
-                                { fillRemainingRows(transactions.mempool.length)}
+                                { fillRemainingRows(transactions.mempool.length, 6)}
                             </tbody>
                             </Table>
                             <Pagination page={page} setPage={setPage} pagination={pagination} />
