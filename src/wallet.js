@@ -1,6 +1,6 @@
 import { ec, verifySignature } from './utils/ec.js';
 import hashSha256 from './utils/hash.js';
-import Transaction from './classes/Transaction.js';
+import Transaction, {CoinbaseTransaction} from './classes/Transaction.js';
 
 class Wallet {
     constructor(){
@@ -25,6 +25,9 @@ class Wallet {
         // console.log(tr.isValid());
         
         return tr;
+    }
+    createCoinbase(height, fees){
+        return new CoinbaseTransaction(height, this.publicKey, fees);
     }
 }
 const wallet = new Wallet()

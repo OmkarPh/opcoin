@@ -1,8 +1,8 @@
 import hasher from '../utils/hash.js';
 
 export default class Block{
-    constructor(blockNumber, timestamp, transactions, nonce, prevHash=0) {
-        this.number = blockNumber;
+    constructor(height, timestamp, transactions, nonce, prevHash=0) {
+        this.height = height;
         this.timestamp = timestamp;
 
         this.transactions = transactions;

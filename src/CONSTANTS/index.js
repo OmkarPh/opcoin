@@ -1,5 +1,7 @@
 const DIFFICULTY_ZEROES = '000';
-const MAX_TRANSACTIONS = process.env.MAX_TRANSACTIONS || 5;
+const MAX_TRANSACTIONS = 3;
+const INIT_REWARD = 50;
+const HALVING_RATE = 11;
 const PORT = process.argv[2] || process.env.PORT || 5000;
 const SUBDOMAIN = process.argv[3] || process.env.SUBDOMAIN || "omkarphansopkar2003" 
 const EXPOSE_GLOBALLY = process.env.EXPOSE_GLOBALLY || 'no'
@@ -19,6 +21,8 @@ const pubnubCredentials = {
 export {
     MAX_TRANSACTIONS,
     DIFFICULTY_ZEROES, 
+    INIT_REWARD,
+    HALVING_RATE,
     PORT,
     SUBDOMAIN,
     EXPOSE_GLOBALLY,

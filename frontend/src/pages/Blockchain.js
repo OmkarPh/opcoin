@@ -88,7 +88,7 @@ const Blockchain = (props) => {
                         </Row>
                         <br/>
                         
-                        <Table striped bordered hover size="sm" responsive>
+                        <Table striped={true} bordered hover size="sm" responsive>
                             <thead>
                                 <tr>
                                 <th>#</th>
@@ -102,7 +102,7 @@ const Blockchain = (props) => {
                                     blockchain.chain.map(block => {
                                         return(
                                             <tr key={block.hash}>
-                                                <td>{block.number}</td>
+                                                <td>{block.height}</td>
                                                 <td>{block.transactions.length}</td>
                                                 <td>{getRelativeTime(block.timestamp)}</td>
                                                 <td className="fa-ellipsis-h" >{block.hash}</td>

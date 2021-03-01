@@ -1,43 +1,60 @@
 import { v4 as uuidv4 } from 'uuid';
-import hasher from '../utils/hash.js';
-import { verifySignature } from '../utils/ec.js';
+import { verifySignature, calculateReward } from '../utils/index.js';
+
+
+function createOutputMap({senderWallet, receiverPublicKey, amount}){
+    const outputMap = {};
+    outputMap[receiverPublicKey] = amount;
+    outputMap[senderWallet.publicKey] = senderWallet.balance - amount;
+    return outputMap;
+}
+
+function createInputMap(senderWallet, outputMap){
+    return {
+        timestamp: Date.now().toString(),
+        amount: senderWallet.balance,
+        publicKey: senderWallet.publicKey,
+        signature: senderWallet.sign(JSON.stringify(outputMap))            
+    }
+}
+
+
 
 export default class Transaction{
     constructor({senderWallet, receiverPublicKey, amount}){
         this.id = uuidv4();
         this.timestamp = Date.now().toString();
-        this.outputMap = this.createOutputMap({senderWallet, receiverPublicKey, amount});
-        this.input = this.createInput(senderWallet, this.outputMap);
+        this.outputMap = createOutputMap({senderWallet, receiverPublicKey, amount});
+        this.inputMap = createInputMap(senderWallet, this.outputMap);
+        this.fee = this.calculateFees();
 
+        this.amount = 0.5;
+        this.sender = this.receiver = 'dummy';
+    }
 
-        this.amount = 0;
-        this.fee = 'dummy';
-        this.sender = 'dummy';
-        this.receiver = 'dummy';
-    }
-    createOutputMap({senderWallet, receiverPublicKey, amount}){
-        const outputMap = {};
-        outputMap[receiverPublicKey] = amount;
-        outputMap[senderWallet.publicKey] = senderWallet.balance - amount;
-        return outputMap;
-    }
-    createInput(senderWallet, outputMap){
-        // console.log(senderWallet);
-        return {
-            timestamp: Date.now().toString(),
-            amount: senderWallet.balance,
-            publicKey: senderWallet.publicKey,
-            signature: senderWallet.sign(JSON.stringify(outputMap))            
-        }
+    calculateFees(){
+        const totalInput = this.inputMap.amount;
+        // const totalInput = Object.values(this.inputMap)
+            // .reduce((total, inputAmount) => total + inputAmount);
+    
+        const totalOutput = Object.values(this.outputMap)
+            .reduce((total, outputAmount) => total + outputAmount);
+        
+        return totalInput - totalOutput;
     }
 
     static validate(transaction){
-        const { input: { publicKey, amount, signature }, outputMap } = transaction;
+        const { inputMap: { publicKey, amount, signature }, outputMap, fee } = transaction;
 
-        const totalOutput = Object.values(outputMap)
+        const totalInput = amount;
+        // const totalInput = Object.values(inputMap)
+        // .reduce((total, inputAmount) => total + inputAmount);
+
+        const totalOutput =  Object.values(outputMap)
             .reduce((total, outputAmount) => total + outputAmount);
-            
-        if(amount !== totalOutput){
+                    
+        // console.log(`Input: ${amount}, output: ${totalOutput}, fee: ${fee}`);
+        if(amount !== totalOutput + fee){
             console.log('Invalid transaction from pub key:', publicKey);
             return false;
         }
@@ -48,6 +65,7 @@ export default class Transaction{
     }
 
     static requiredKeys = ['sender', 'receiver', 'amount', 'fee']
+
     static sortDescending(t1, t2){
         return t2.fee - t1.fee
     }
@@ -56,4 +74,23 @@ export default class Transaction{
     isValid(){
         return Transaction.validate(this);
     }
+}
+
+class CoinbaseTransaction{
+    constructor(height, minerPublicKey, fees){
+        this.id = uuidv4();
+        this.timestamp = Date.now().toString();
+        
+        let reward = calculateReward(height, fees);
+        this.input = {
+            COINBASE: reward
+        }
+        this.outputMap = {
+            [minerPublicKey] : reward
+        }
+    }
+}
+
+export {
+    CoinbaseTransaction
 }

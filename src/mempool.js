@@ -3,7 +3,7 @@ import PubSub from './utils/pubsub.js';
 import {CHANNELS, KEYWORDS} from './utils/pubsub.js';
 
 // Constants
-import { INIT_LISTEN, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
+import { MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
 
 import Transaction from './classes/Transaction.js';
 import blockchain from './blockchain.js';
@@ -15,7 +15,9 @@ class Mempool {
         this.mempoolPubsub = new PubSub([CHANNELS.OPCOIN_MEMPOOL]);
 
     }
-
+    getLength(){
+        return this.mempool.length;
+    }
     getMempoolObj(){
         return this.mempool
     }
@@ -26,7 +28,7 @@ class Mempool {
                 page: 1,
                 length: len,
                 maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
-                mempool: this.mempool
+                mempool: this.mempool.slice().reverse()
             };
 
         let startIndex = ENTRIES_PER_PAGE * (page-1);
@@ -56,8 +58,11 @@ class Mempool {
         this.mempool.push(newTransaction);
         return newTransaction.id;
     }
-    removeTransactions(endIdx){
-        this.mempool.splice(0, endIdx);
+    removeTransactions(newBlock){
+        this.mempool.splice(0, this.getBestTransactions().length);
+    }
+    getBestTransactions(){
+        return this.mempool.sort(Transaction.sortDescending).slice(0, MAX_TRANSACTIONS-1);
     }
     syncMempool(){
         return false;
@@ -71,7 +76,7 @@ const mempool = new Mempool();
 // Blockchain initializer
 const initTransactions = [
     ["gp", "op", 3, 0.0005],
-    ["pp", "op", 9, 0.00002],
+    ["pp", "gp", 9, 0.00002],
     // ["pp", "op", 3, 0.0002],
     // ["op", "gp", 6, 0.0015], 
     // ["op", "gp", 25, 0.525], 
@@ -80,10 +85,12 @@ const initTransactions = [
     // ["pp", "op", 3, 1.052],
 ];
 
-for(let [sender, receiver, amount] of initTransactions)
-    mempool.addTransaction(
-        wallet.createTransaction({receiverPublicKey: receiver, amount})
-    );
+if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
+    for(let [sender, receiver, amount] of initTransactions)
+        mempool.addTransaction(
+            wallet.createTransaction({receiverPublicKey: receiver, amount})
+        );
+
 // for(let [sender, receiver, amount] of initTransactions)
 //     mempool.addTransaction(
 //         wallet.createTransaction({receiverPublicKey: receiver, amount})

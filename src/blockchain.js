@@ -3,18 +3,14 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 // Utility modules
-import pow from './utils/pow.js'
-import isValidChain from './utils/isValid.js';
-import hashedChain from './utils/hashedChain.js';
-
+import { calculateTotalFees, PubSub, isValidChain, hashedChain, pow } from './utils/index.js';
+import {CHANNELS, KEYWORDS} from './utils/pubsub.js';       // PubSub networking constants
 
 // File-based caching
 import flatCache from 'flat-cache';
 const cache = flatCache.load('blockchain', path.resolve('./.cache'));
 
-// PubSub networking utitlity
-import PubSub from './utils/pubsub.js';
-import {CHANNELS, KEYWORDS} from './utils/pubsub.js';
+
 
 
 // Constants
@@ -25,6 +21,8 @@ import Block from './classes/Block.js';
 import Transaction from './classes/Transaction.js';
 
 import mempool from './mempool.js';
+import wallet from './wallet.js';
+
 
 // Major object
 class Blockchain{
@@ -88,19 +86,13 @@ class Blockchain{
             return null;
         return this.chain[this.chain.length -1] 
     }
-    createBlock(transactions, proof, prevHash, length){
-        if(transactions.length > MAX_TRANSACTIONS)
-            throw new Error("Max transaction size reached");
-        return new Block(length, Date.now().toString(), transactions, proof, prevHash);
-    }
     copyChain(newChain){
-        if(newChain == null || newChain.length == 0)    return false;
-        
+        if(newChain == null || newChain.length == 0)    
+            return false;
         let tempChain = [];
-
         try{
-            for(let {timestamp, transactions, nonce, prevHash} of newChain){
-                const newBlock = new Block(tempChain.length+1, timestamp, transactions, nonce, prevHash);
+            for(let {height, timestamp, transactions, nonce, prevHash} of newChain){
+                const newBlock = new Block(height, timestamp, transactions, nonce, prevHash);
                 tempChain.push(newBlock);
             }
             if(isValidChain(tempChain)){
@@ -139,35 +131,30 @@ class Blockchain{
         }
     }
     mineBlock(){
-        let mempoolArr = mempool.getMempoolObj();
-        if(mempoolArr.length == 0)
-            return 0;
+         const transactions = [];
 
         // Target transactions with highest fees
-        let transactions = mempoolArr.sort(Transaction.sortDescending).slice(0, MAX_TRANSACTIONS);
+        const transactionList = mempool.getBestTransactions();
+        
+        // Add 1st transaction as a coinbase to reward opcoins to miner
+        transactions.push(wallet.createCoinbase(this.chain.length, calculateTotalFees(transactionList)));
+        transactions.push(...transactionList);
 
         try{
             let lastBlock = this.getLastBlock();
-            if(lastBlock == null)
-                this.chain.push(pow(transactions, 0, this.createBlock, this.chain.length));
-            else
-                this.chain.push(pow(transactions, lastBlock.hashSelf(), this.createBlock, this.chain.length));
+            if(lastBlock == null){
+                // Genesis block
+                this.chain.push(pow(transactions, 0, this.chain.length));
+            }else
+                this.chain.push(pow(transactions, lastBlock.hashSelf(), this.chain.length));
             
             // Storing chain into cache
             cache.setKey('blockchain', this.chain);
             cache.save();
 
             // Remove mined transactions
-            mempool.removeTransactions(0, transactions.length);
+            mempool.removeTransactions(this.getLastBlock());
             
-            // Gift opcoins to miner
-            // this.addTransaction({
-            //     sender: this.nodeAddress,
-            //     receiver: 'Omkar',
-            //     amount: 0.5,
-            //     fee: 0.00
-            // });
-
             this.blockchainPubsub.publish({
                 title: "New block", 
                 description: this.chain
@@ -175,18 +162,18 @@ class Blockchain{
             .catch(err => {
                 console.log(err);
                 console.log('Something wrong happened while publishing newly mined chain !');
+                return -1;
             });
-
-            return this.getLastBlock().number;
+            return this.getLastBlock().height;
         }catch(e){
             console.log(e);
             console.log("Max transactions reached !!");
-            return -1;
+            return -2;
         }
     }
 }
-
-
 const blockchain = new Blockchain();
+
+
 
 export default blockchain;

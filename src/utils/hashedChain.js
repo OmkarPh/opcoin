@@ -4,13 +4,14 @@ const getChainWithHashes = (page, chain) => {
     
     let len = chain.length;
 
+
     // If final length of response is greater than actual length, return chain without slicing
     if(len <= ENTRIES_PER_PAGE || !page)
         return  {
             page: 1,
             length: len,
             maxPages: Math.ceil(len/ENTRIES_PER_PAGE),
-            chain: chain.map(block => ({...block, hash: block.hashSelf()}))
+            chain: chain.slice().reverse().map(block => ({...block, hash: block.hashSelf()}))
         };
 
     // Compute start and end indices based on page number 
