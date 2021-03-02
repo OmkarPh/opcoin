@@ -82,7 +82,7 @@ class CoinbaseTransaction{
         this.timestamp = Date.now().toString();
         
         let reward = calculateReward(height, fees);
-        this.input = {
+        this.inputMap = {
             COINBASE: reward
         }
         this.outputMap = {

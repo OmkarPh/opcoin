@@ -2,7 +2,6 @@ import express from 'express';
 const router = new express.Router();
 
 import blockchain from '../blockchain.js';
-
 import wallet from '../wallet.js';
 
 router.get('/wallet', (req,res)=>{
@@ -28,5 +27,9 @@ router.post('/addTransaction', (req,res)=>{
         res.status(200).json({transactionId: newTransactionId, message: "Transaction successfully added to the mempool! You'll see it in a block soon :)"})
 });
 
+router.get('/calculateBalance', async (req, res)=>{
+    let balance = wallet.calculateBalance(blockchain.getChain())
+    res.json({balance, publicKey: wallet.getPublicKey()});
+})
 
 export default router;

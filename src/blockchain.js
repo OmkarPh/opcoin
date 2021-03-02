@@ -7,10 +7,8 @@ import { calculateTotalFees, PubSub, isValidChain, hashedChain, pow } from './ut
 import {CHANNELS, KEYWORDS} from './utils/pubsub.js';       // PubSub networking constants
 
 // File-based caching
-import flatCache from 'flat-cache';
-const cache = flatCache.load('blockchain', path.resolve('./.cache'));
-
-
+import Cache from './classes/Cache.js';
+const cache = new Cache('blockchain');
 
 
 // Constants
@@ -53,7 +51,7 @@ class Blockchain{
 
             // Listening to responses for {INIT_LISTEN} time period and then unsubscribe to init chain
             setTimeout(()=>{
-                console.log('Unsubscribing and terminating initialization response acceptance');
+                console.log(`Unsubscribing and initialization response channel after ${INIT_LISTEN}`);
                 if(tempPubsub)
                     tempPubsub.unsubscribeAll();            
             }, INIT_LISTEN);
@@ -100,7 +98,6 @@ class Blockchain{
 
                 // Storing updated chain into cache
                 cache.setKey('blockchain', this.chain);
-                cache.save();
 
                 return true;
             }
@@ -150,7 +147,6 @@ class Blockchain{
             
             // Storing chain into cache
             cache.setKey('blockchain', this.chain);
-            cache.save();
 
             // Remove mined transactions
             mempool.removeTransactions(this.getLastBlock());
