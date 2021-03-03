@@ -34,17 +34,19 @@ class Wallet {
     getPublicKey(){
         return this.keyPair.getPublic().encode('hex');
     }
+
+    // Pending
     calculateBalance(chain){
         let tempBalance = 0;
         let pubKey = this.getPublicKey();
         for(let {height, transactions} of chain){
             process.stdout.write(`Received OPs in block #${height}: `);
-            for(let {id, inputMap, outputMap} of transactions){
+            for(let {id, inputs, outputs} of transactions){
                 // Eliminating spent tx for this wallet's public key
-                // Object.keys(inputMap)
+                // Object.keys(inputs)
 
                 // Recording received tx for this wallet's public key
-                Object.keys(outputMap).forEach(key => {
+                Object.keys(outputs).forEach(key => {
                     if(key == pubKey){
                         tempBalance += Number(outputMap[key])
                         process.stdout.write(outputMap[key]+", ");

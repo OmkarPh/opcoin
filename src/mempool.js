@@ -6,7 +6,6 @@ import {CHANNELS, KEYWORDS} from './utils/pubsub.js';
 import { MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
 
 import Transaction from './classes/Transaction.js';
-import blockchain from './blockchain.js';
 import wallet from './wallet.js';
 
 class Mempool {

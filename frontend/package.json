@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^12.6.3",
     "axios": "^0.21.1",
     "bootstrap": "^4.6.0",
+    "lodash": "^4.17.21",
     "mdbreact": "^5.0.1",
     "query-string": "^6.14.0",
     "react": "^17.0.1",

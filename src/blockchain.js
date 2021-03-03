@@ -16,11 +16,11 @@ import { INIT_LISTEN, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/ind
 
 // Classes
 import Block from './classes/Block.js';
-import Transaction from './classes/Transaction.js';
+
 
 import mempool from './mempool.js';
 import wallet from './wallet.js';
-
+import utxo from './utxo.js';
 
 // Major object
 class Blockchain{
@@ -93,7 +93,9 @@ class Blockchain{
                 const newBlock = new Block(height, timestamp, transactions, nonce, prevHash);
                 tempChain.push(newBlock);
             }
-            if(isValidChain(tempChain)){
+
+            // Validate chain & revamp UTXO set from new chain
+            if(isValidChain(tempChain) && utxo.replaceFromChain(tempChain)){
                 this.chain = tempChain;
 
                 // Storing updated chain into cache
