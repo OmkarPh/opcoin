@@ -6,7 +6,6 @@ import {CHANNELS, KEYWORDS} from './utils/pubsub.js';
 import { MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
 
 import Transaction from './classes/Transaction.js';
-import wallet from './wallet.js';
 
 class Mempool {
     constructor(){
@@ -69,34 +68,6 @@ class Mempool {
 
 }
 const mempool = new Mempool();
-
-
-
-// Blockchain initializer
-const initTransactions = [
-    ["gp", "op", 3, 0.0005],
-    ["pp", "gp", 9, 0.00002],
-    // ["pp", "op", 3, 0.0002],
-    // ["op", "gp", 6, 0.0015], 
-    // ["op", "gp", 25, 0.525], 
-    // ["op", "pp", 4, 0.845],
-    // ["pp", "op", 6, 0.062],
-    // ["pp", "op", 3, 1.052],
-];
-
-if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
-    for(let [sender, receiver, amount] of initTransactions)
-        mempool.addTransaction(
-            wallet.createTransaction({receiverPublicKey: receiver, amount})
-        );
-
-// for(let [sender, receiver, amount] of initTransactions)
-//     mempool.addTransaction(
-//         wallet.createTransaction({receiverPublicKey: receiver, amount})
-//     );
-
-// if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
-//     for(let i=0; i<2; i++)    blockchain.mineBlock();
 
 
 

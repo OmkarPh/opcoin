@@ -19,8 +19,7 @@ import Block from './classes/Block.js';
 
 
 import mempool from './mempool.js';
-import wallet from './wallet.js';
-import utxo from './utxo.js';
+import utxo from './utxo.js';       // Can be removed by dependency injection Lot of drill tho
 
 // Major object
 class Blockchain{
@@ -33,7 +32,7 @@ class Blockchain{
             this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
             
             // Retrieve blockchain from previous boot up
-            this.receiveUpdatedChain(cache.getKey('blockchain'));
+            this.receiveUpdatedChain(cache.getKey('blockchain'), 'cache');
             
             // Add temporary listener and request blockchain updates
             this.newNodePubsub.addListener(msgObject=>{
@@ -51,7 +50,7 @@ class Blockchain{
 
             // Listening to responses for {INIT_LISTEN} time period and then unsubscribe to init chain
             setTimeout(()=>{
-                console.log(`Unsubscribing and initialization response channel after ${INIT_LISTEN}`);
+                console.log(`Unsubscribing and initialization response channel after ${INIT_LISTEN}ms`);
                 if(tempPubsub)
                     tempPubsub.unsubscribeAll();            
             }, INIT_LISTEN);
@@ -110,7 +109,7 @@ class Blockchain{
             return false;
         }
     }
-    receiveUpdatedChain(newChain){
+    receiveUpdatedChain(newChain, source='network'){
         try{
             let blockchain = this;
             if(!newChain)   return;
@@ -118,40 +117,46 @@ class Blockchain{
             // Copy newly published chain only if it is greater than own chain
             if(newChain.length > blockchain.chain.length){
                 if(blockchain.copyChain(newChain))
-                    console.log('Copied newly published chain of length', newChain.length);
+                    console.log(`Copied chain with length ${newChain.length} from ${source}`);
                 else
-                    console.log('Received an invalid newly published chain of length', newChain.length);
+                    console.log(`Received an invalid chain with length ${newChain.length} from ${source}`);
             }else
-                console.log('Received a shorter newly published chain of length', newChain.length);
+                console.log(`Received a shorter chain with length ${newChain.length} from ${source}`);
             
         }catch(e){
             console.log(e);
             console.log('Something weird happened when received new blockchain !');
         }
     }
-    mineBlock(){
+    mineBlock(minerWallet){
          const transactions = [];
 
         // Target transactions with highest fees
         const transactionList = mempool.getBestTransactions();
         
         // Add 1st transaction as a coinbase to reward opcoins to miner
-        transactions.push(wallet.createCoinbase(this.chain.length, calculateTotalFees(transactionList)));
+        transactions.push(minerWallet.createCoinbase(this.chain.length, calculateTotalFees(transactionList)));
         transactions.push(...transactionList);
 
         try{
             let lastBlock = this.getLastBlock();
-            if(lastBlock == null){
-                // Genesis block
-                this.chain.push(pow(transactions, 0, this.chain.length));
-            }else
-                this.chain.push(pow(transactions, lastBlock.hashSelf(), this.chain.length));
-            
+
+            let newBlock = undefined;
+            // Check for Genesis block
+            if(lastBlock == null)
+                newBlock = pow(transactions, 0, this.chain.length);
+            else
+                newBlock = pow(transactions, lastBlock.hashSelf(), this.chain.length);
+            this.chain.push(newBlock);
+                
             // Storing chain into cache
             cache.setKey('blockchain', this.chain);
 
             // Remove mined transactions
             mempool.removeTransactions(this.getLastBlock());
+
+            // Processing UTXO's of this new block
+            utxo.processSingleBlock(newBlock);
             
             this.blockchainPubsub.publish({
                 title: "New block", 

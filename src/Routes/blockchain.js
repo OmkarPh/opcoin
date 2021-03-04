@@ -3,7 +3,8 @@ const router = new express.Router();
 
 // Major blockchain
 import blockchain from '../blockchain.js';
-import Transaction from '../classes/Transaction.js';
+import wallet from '../wallet.js'; 
+import utxo from '../utxo.js';
 
 router.get('/blockchain', async (req,res)=>{
     let page = req.query.page ? Math.round(parseInt(req.query.page)) : 1;
@@ -15,7 +16,7 @@ router.get('/blockchain', async (req,res)=>{
 
 router.post('/mineBlock', (req,res)=>{
     process.stdout.write(`Attempting to mine block #${blockchain.getLength()} ........ `);
-    let minedBlock = blockchain.mineBlock();
+    let minedBlock = blockchain.mineBlock(wallet);
     if(minedBlock == -2)
         res.status(503).json({message: "No transactions in mempool, Cool down your mining rig (ー。ー) zzz"})
     else if(minedBlock == -1)
@@ -33,5 +34,8 @@ router.get('/validity', (req,res)=>{
         res.status(500).json({message: "Invalid blockchain !"});
 });
 
+router.get('/utxo', (req,res)=>{
+    return res.status(200).json([...utxo.getUtxo()]);
+})
 
 export default router;

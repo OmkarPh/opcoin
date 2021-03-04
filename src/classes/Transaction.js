@@ -1,7 +1,8 @@
 import { verifySignature, calculateReward, hashSha256 } from '../utils/index.js';
 
 
-function createOutput({senderWallet, receiver, amount, amountSelf = 0}){
+function createOutput({senderWallet, receiver, amount, amountSelf=0}){
+    // amountSelf = amountSelf !== undefined ? amountSelf : 0;
     const outputs = [];
     outputs.push({ receiver, amount })
     outputs.push({
@@ -31,7 +32,7 @@ export default class Transaction{
     constructor({senderWallet, receiver, amount}){
         this.timestamp = Date.now().toString();
         this.inputs = createInput(senderWallet);
-        this.outputs = createOutput({senderWallet, receiver, amount, amountSelf=0});
+        this.outputs = createOutput({senderWallet, receiver, amount, amountSelf:0});
         this.fee = this.calculateFees();
 
         this.amount = 0.5;
@@ -111,8 +112,24 @@ class CoinbaseTransaction{
 
         this.id = Transaction.hash({input: this.inputs, output: this.outputs, timestamp: this.timestamp});
     }
-    static verify(coinbaseTransaction){
 
+    // Add support for fees
+    static verify({inputs, outputs, id}, height, fees=0){
+        const suitableReward = calculateReward(height, fees);
+        
+        if(inputs.length != 1 || outputs.length != 1){
+            console.log('Input and output of coinbase transactions must have only 1 input and output respectively. Tx:');
+            console.log(coinbaseTransaction);
+            return false;
+        }
+
+        if(inputs[0].amount != suitableReward-fees || outputs[0].amount != suitableReward){
+            console.log(`Actual amounts: Input:${inputs[0].amount}, output:${outputs[0].amount}`);
+            console.log(`Ideal amounts: Input:${suitableReward-fees}, output:${suitableReward}`);
+            return false;
+        }
+        
+        return true;
     }
 }
 
