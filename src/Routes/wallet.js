@@ -11,6 +11,10 @@ router.get('/', (req,res)=>{
 
 router.post('/addTransaction', (req,res)=>{
     console.log(req.body);
+    const {receiverPublicKey, amount} = req.body;
+    if(!receiverPublicKey || !amount)
+        return res.status(400).json({message: 'Invalid params'});
+    wallet.createTransaction({receiverPublicKey,amount})
     let newTransactionId = blockchain.addTransaction(req.body);
     for(let key of Transaction.requiredKeys)
         if(req.body[key] === undefined) 

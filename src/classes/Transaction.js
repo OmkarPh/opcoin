@@ -2,73 +2,106 @@ import { verifySignature, calculateReward, hashSha256 } from '../utils/index.js'
 
 
 function createOutput({senderWallet, receiver, amount, amountSelf=0}){
-    // amountSelf = amountSelf !== undefined ? amountSelf : 0;
-    const outputs = [];
-    outputs.push({ receiver, amount })
-    outputs.push({
-        receiver: senderWallet.publicKey,
-        amount: amountSelf
-    })
+    const outputs = [
+        {receiver, amount},
+        {
+           receiver: senderWallet.getPublicKey(),
+           amount: amountSelf 
+        }
+    ];
     return outputs;
 }
 
-function createInput(senderWallet, output){
+function createInput(senderWallet, inputUtxos, outputs){
     // Assumption: This somehow manages to get the UTXOs
-    const input = [];
-    input.push({
-        txId: 'hash',
-        idx: 0,
-        // height: 0,
-        sender: senderWallet.publicKey,
-        amount: 0,
-        signature: senderWallet.sign(JSON.stringify(output))
-    });
-    return input;
+    const inputs = [];
+    for(const {utxo, hash} of inputUtxos){
+        inputs.push({
+            utxoID: hash,
+            amount: utxo.amount,
+            sender: utxo.receiver,
+            signature: senderWallet.sign(JSON.stringify(outputs))
+        });
+        let verification = verifySignature({
+            publicKey: senderWallet.getPublicKey(),
+            data: [...outputs],
+            signature: inputs[inputs.length-1].signature
+        });
+        console.log('Verification:',verification);
+    }
+    return inputs;
 }
 
 
 
 export default class Transaction{
-    constructor({senderWallet, receiver, amount}){
+    constructor({senderWallet, receiver, amount, inputUtxos}){
         this.timestamp = Date.now().toString();
-        this.inputs = createInput(senderWallet);
-        this.outputs = createOutput({senderWallet, receiver, amount, amountSelf:0});
-        this.fee = this.calculateFees();
 
-        this.amount = 0.5;
-        this.sender = this.receiver = 'dummy';
-        this.id = Transaction.hash({input: this.inputs, output: this.outputs, timestamp: this.timestamp});
+        let [fees, amountSelf] = this.calculateFeesAndReturns(inputUtxos, amount); 
+        this.fee = fees
+
+        this.outputs = createOutput({senderWallet, receiver, amount, amountSelf});
+
+        this.inputs = createInput(senderWallet, inputUtxos, this.outputs);
+
+        this.id = Transaction.hash({
+            inputs: this.inputs,
+            outputs: this.outputs,
+            timestamp: this.timestamp,
+            fee: fees
+        });
     }
 
-    calculateFees(){
-        const totalInput = this.inputMap.amount;
-        // const totalInput = Object.values(this.inputMap)
-            // .reduce((total, inputAmount) => total + inputAmount);
-    
-        const totalOutput = Object.values(this.outputMap)
-            .reduce((total, outputAmount) => total + outputAmount);
+
+    calculateFeesAndReturns(inputUtxos, sendAmount){        
+        let totalInput = 0;
+        for(const {utxo:{amount}} of inputUtxos)
+            totalInput += amount
         
-        return totalInput - totalOutput;
+        let fees=0;
+        let returns = totalInput-sendAmount;
+
+        // If sender can afford fees, then deduct otherwise don't
+        if(returns > 0.0005){
+            fees = 0.0005;
+            returns -= 0.0005;
+        }
+        
+        return [fees, returns];
     }
 
-    static validate(transaction){
-        const { inputMap: { publicKey, amount, signature }, outputMap, fee } = transaction;
+    static validate(transaction, utxo){
 
-        const totalInput = amount;
-        // const totalInput = Object.values(inputMap)
-        // .reduce((total, inputAmount) => total + inputAmount);
+        if(!transaction)
+            throw new Error('Transaction not provided into validate fn !');
 
-        const totalOutput =  Object.values(outputMap)
-            .reduce((total, outputAmount) => total + outputAmount);
+        if(!utxo)
+            throw new Error('Dependency utxo must be injected to perform validation.');
+
+        const { inputs, outputs, fee } = transaction;
+
+        let totalInput = 0;
+        for(let {utxoID, amount, sender, signature} of inputs){
+            if(!utxo.hasUtxo(utxoID))
+                return false;
+            if(!verifySignature({ publicKey: sender, data: outputs, signature }))
+                return false;
+            
+            totalInput += amount;
+        }
+
+        let totalOutput = 0;
+        outputs.forEach(({amount})=>totalOutput+=amount);
+
                     
-        // console.log(`Input: ${amount}, output: ${totalOutput}, fee: ${fee}`);
-        if(amount !== totalOutput + fee){
-            console.log('Invalid transaction from pub key:', publicKey);
+        if(totalInput !== totalOutput + fee){
+            console.log('Invalid transaction denominations in following transaction:');
+            console.log(transaction);
+            console.log(`Verifying transaction...TotalInput: ${totalInput} TotalOutput: ${totalOutput}, Fee: ${fee}`);
             return false;
         }
 
-        if(!verifySignature({publicKey, data: outputMap, signature}))
-            return false;
         return true;
     }
     
@@ -77,9 +110,9 @@ export default class Transaction{
         return t2.fee - t1.fee
     }
 
-    static hash({input, output, timestamp}){
+    static hash({inputs, outputs, fee, timestamp}){
         return hashSha256(JSON.stringify({
-            input, output, timestamp
+            inputs, outputs, fee, timestamp
         }))
     }
     static hashUtxo({id, index}){
@@ -88,9 +121,9 @@ export default class Transaction{
              index      // Identify specific utxo out of multiple utxos in same transaction having  same amount and address, since every utxo has different index(context of single transaction)
         }));
     }
-    // TODO
-    isValid(){
-        return Transaction.validate(this);
+    
+    isValid(utxo){
+        return Transaction.validate(this, utxo);
     }
 }
 

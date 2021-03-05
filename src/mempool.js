@@ -11,7 +11,6 @@ class Mempool {
     constructor(){
         this.mempool = [];
         this.mempoolPubsub = new PubSub([CHANNELS.OPCOIN_MEMPOOL]);
-
     }
     getLength(){
         return this.mempool.length;
@@ -49,12 +48,15 @@ class Mempool {
             mempool: this.mempool.slice(startIndex, endIndex)
         };
     }
-
-    // TODO
-    addTransaction(newTransaction){
-        if(!newTransaction.isValid()) return -1;
-        this.mempool.push(newTransaction);
-        return newTransaction.id;
+    addTransaction(transaction, source='network'){
+        this.mempool.push(transaction);
+        if(source != 'network')
+            this.mempoolPubsub.publish({
+                title: "New transaction",
+                description: transaction
+            })
+        console.log(`Added transaction #${transaction.id} to mempool from ${source}`);
+        return true;
     }
     removeTransactions(newBlock){
         this.mempool.splice(0, this.getBestTransactions().length);

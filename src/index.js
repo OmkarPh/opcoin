@@ -35,7 +35,7 @@ app.listen(PORT, ()=> {
         if(err)
             console.log(`Some error occured during exposing node globally: `, err);
 
-        // Bypass tactic:
+        // Bypass config:
         axios.get(`${tunnel.url}/responses/ping`, (res)=>console.log(res.data));
     });
     tunnel.on('close', ()=>{

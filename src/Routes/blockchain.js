@@ -35,7 +35,7 @@ router.get('/validity', (req,res)=>{
 });
 
 router.get('/utxo', (req,res)=>{
-    return res.status(200).json([...utxo.getUtxo()]);
+    return res.status(200).json([...utxo.getUtxoRecord()]);
 })
 
 export default router;

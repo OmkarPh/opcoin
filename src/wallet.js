@@ -18,6 +18,12 @@ class Wallet {
     constructor(){
         this.balance = 0;
         this.keyPair = ec.genKeyPair();        
+        mempool.mempoolPubsub.addListener(transaction=>{
+            if(Transaction.validate(transaction,utxo))
+                mempool.addTransaction(transaction, 'network');
+            else
+                console.log(`Received invalid transaction from network #${transaction.id}`);
+        })
 
         // Replacing pair, if key was cached earlier.
         let cachedPrivateKey = cache.getKey('private');
@@ -26,8 +32,8 @@ class Wallet {
         else
             this.keyPair = ec.keyFromPrivate(cachedPrivateKey, 'hex');
 
+        this.selfUtxo = new Map();
         this.balance = this.calculateBalance();
-        this.utxo = new Map();
     }
     sign(data){
         return this.keyPair.sign(hashSha256(data));
@@ -42,37 +48,114 @@ class Wallet {
     getPublicKey(){
         return this.keyPair.getPublic().encode('hex');
     }
-
-    // Pending
+    createCoinbase(height, fees){
+        return new CoinbaseTransaction(height, this.getPublicKey(), fees);
+    }
+    
     calculateBalance(){
         let tempBalance = 0;
         let pubKey = this.getPublicKey();
 
-        let utxos = utxo.getUtxo();
+        this.selfUtxo.clear();
 
-        utxos.forEach(({receiver, amount}, hash)=>{
-            if(receiver == pubKey)
+        let utxos = utxo.getUtxoRecord();
+
+        utxos.forEach((utxo, hash)=>{
+            const {receiver, amount} = utxo;
+            if(receiver == pubKey){
                 tempBalance += amount;
+                this.selfUtxo.set(hash, utxo);
+            }
         });
+
         this.balance = tempBalance;
-        console.log(`Recalculated balance for ${minifyString(pubKey)} is ${this.balance} OPs`);
+        console.log(`Recalculated balance for ${minifyString(pubKey)}: ${this.balance} OPs`);
         return this.balance;
     }
+
+    getBestInputs(amount){
+        let inputUtxos = [];
+        let inputTotal = 0;
+
+        let lowUtxos = [];
+        let lowTotal = 0;
+
+        let highUtxos = [];
+
+        for(let [hash, utxo] of this.selfUtxo.entries()){
+            if(utxo.amount <= amount){
+                lowTotal += utxo.amount;
+                lowUtxos.push({utxo, hash});
+                if(lowTotal >= amount)
+                    break;
+            }
+            else
+                highUtxos.push({utxo, hash});
+        }
+
+
+        if(lowTotal >= amount){
+            lowUtxos.sort((a, b) => a.amount - b.amount);
+            for(let utxo of lowUtxos){
+                inputTotal += utxo.utxo.amount;
+                inputUtxos.push(utxo);
+                if(inputTotal >= amount)
+                    break;
+            }
+        }else{
+            let closest = highUtxos.reduce((a, b) => {
+                if(a.utxo.amount <= b.utxo.amount)
+                    return a;
+                return b;
+            });
+            inputUtxos.push(closest);
+        }
+        
+        // console.log(lowUtxos);
+        // console.log(highUtxos);
+
+        return inputUtxos;
+    }
+
+
+
     createTransaction({receiverPublicKey, amount}){
+        this.calculateBalance();
         if(amount > this.balance)
             throw new Error('Input amount exceeds, Transaction not possible');
-        let tr = new Transaction({senderWallet: this, receiverPublicKey, amount});
+
+        let inputs = this.getBestInputs(amount);
+        // console.log('Best inputs:');
+        // console.log(inputs);
+
+        let tx = new Transaction({
+            senderWallet: this, 
+            receiver: receiverPublicKey, 
+            amount,
+            inputUtxos: inputs
+        });
+        console.log('Transaction created by this node:', tx.id);
+        mempool.addTransaction(tx, 'own wallet');
+        return;
+
+
        
-        return tr;
-    }
-    createCoinbase(height, fees){
-        return new CoinbaseTransaction(height, this.getPublicKey(), fees);
+        console.log(tx);
+        return tx;
     }
 }
 const wallet = new Wallet()
 console.log(`Public key of this node's wallet: ${minifyString(wallet.getPublicKey())}`)
 
+wallet.createTransaction({
+    receiverPublicKey: 'f31c95ffea529678caba829c2b7eb76c8aa7fec825fd0a528ede3a89a6e926c',
+    amount: 30
+});
 
+// wallet.createTransaction({
+//     receiverPublicKey: 'f31c95ffea529678caba829c2b7eb76c8aa7fec825fd0a528ede3a89a6e926c',
+//     amount: 59.521
+// });
 
 // Old dummy initializer
 // // Blockchain initializer

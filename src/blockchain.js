@@ -142,22 +142,25 @@ class Blockchain{
             let lastBlock = this.getLastBlock();
 
             let newBlock = undefined;
-            // Check for Genesis block
+
             if(lastBlock == null)
                 newBlock = pow(transactions, 0, this.chain.length);
             else
                 newBlock = pow(transactions, lastBlock.hashSelf(), this.chain.length);
-            this.chain.push(newBlock);
                 
+            // Processing UTXO's of this new block
+            if(!utxo.processSingleBlock(newBlock))
+                return -1;
+
+            // Add newly mined block to blockchain
+            this.chain.push(newBlock);
+
             // Storing chain into cache
             cache.setKey('blockchain', this.chain);
 
             // Remove mined transactions
             mempool.removeTransactions(this.getLastBlock());
 
-            // Processing UTXO's of this new block
-            utxo.processSingleBlock(newBlock);
-            
             this.blockchainPubsub.publish({
                 title: "New block", 
                 description: this.chain
