@@ -141,13 +141,12 @@ class CoinbaseTransaction{
             receiver: minerPublicKey,
             amount: reward
         }]
-        this.fee = 0;
 
-        this.id = Transaction.hash({input: this.inputs, output: this.outputs, timestamp: this.timestamp});
+        this.id = Transaction.hash({input: this.inputs, output: this.outputs, timestamp: this.timestamp, fee:0});
     }
 
-    // Add support for fees
-    static verify({inputs, outputs, id}, height, fees=0){
+    static verify({inputs, outputs}, height, fees=0){
+
         const suitableReward = calculateReward(height, fees);
         
         if(inputs.length != 1 || outputs.length != 1){
@@ -156,7 +155,7 @@ class CoinbaseTransaction{
             return false;
         }
 
-        if(inputs[0].amount != suitableReward-fees || outputs[0].amount != suitableReward){
+        if(inputs[0].amount != suitableReward || outputs[0].amount != suitableReward){
             console.log(`Actual amounts: Input:${inputs[0].amount}, output:${outputs[0].amount}`);
             console.log(`Ideal amounts: Input:${suitableReward-fees}, output:${suitableReward}`);
             return false;

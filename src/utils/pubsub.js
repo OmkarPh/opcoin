@@ -10,7 +10,8 @@ const pubnubCredentials = {
 
 // Useful for input-consistency across modules
 const KEYWORDS = {
-    REQUEST_INIT_CHAIN: 'REQUEST_INIT_CHAIN'
+    REQUEST_INIT_CHAIN: 'REQUEST_INIT_CHAIN',
+    DELETE_TRANSACTIONS: 'DELETE_TRANSACTION'
 }
 const CHANNELS = {
     OPCOIN: 'OPCOIN',
@@ -47,7 +48,7 @@ class PubSub{
                 if(typeof msgObject.message === 'string')
                     listener(msgObject.message);
                 else
-                    listener(msgObject.message.description);
+                    listener(msgObject.message.description, msgObject);
             }
         });
     }

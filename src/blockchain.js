@@ -54,7 +54,6 @@ class Blockchain{
                 if(tempPubsub)
                     tempPubsub.unsubscribeAll();            
             }, INIT_LISTEN);
-
         }catch(e){
             console.log(e)
             console.log("Something weird happened while creating Blockchain object");
@@ -122,7 +121,8 @@ class Blockchain{
                     console.log(`Received an invalid chain with length ${newChain.length} from ${source}`);
             }else
                 console.log(`Received a shorter chain with length ${newChain.length} from ${source}`);
-            
+
+            utxo.replaceFromChain(newChain);                
         }catch(e){
             console.log(e);
             console.log('Something weird happened when received new blockchain !');
@@ -134,11 +134,11 @@ class Blockchain{
         // Target transactions with highest fees
         const transactionList = mempool.getBestTransactions();
         
-        // Add 1st transaction as a coinbase to reward opcoins to miner
-        transactions.push(minerWallet.createCoinbase(this.chain.length, calculateTotalFees(transactionList)));
-        transactions.push(...transactionList);
-
         try{
+            // Add 1st transaction as a coinbase to reward opcoins to miner
+            transactions.push(minerWallet.createCoinbase(this.chain.length, calculateTotalFees(transactionList)));
+            transactions.push(...transactionList);
+
             let lastBlock = this.getLastBlock();
 
             let newBlock = undefined;
@@ -160,6 +160,10 @@ class Blockchain{
 
             // Remove mined transactions
             mempool.removeTransactions(this.getLastBlock());
+            mempool.mempoolPubsub.publish({
+                title: KEYWORDS.DELETE_TRANSACTIONS,
+                description: transactionList
+            });
 
             this.blockchainPubsub.publish({
                 title: "New block", 
@@ -170,6 +174,7 @@ class Blockchain{
                 console.log('Something wrong happened while publishing newly mined chain !');
                 return -1;
             });
+
             return this.getLastBlock().height;
         }catch(e){
             console.log(e);

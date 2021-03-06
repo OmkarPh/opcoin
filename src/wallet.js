@@ -14,11 +14,16 @@ import blockchain from './blockchain.js';
 import mempool from './mempool.js';
 import utxo from './utxo.js';
 
+import { KEYWORDS } from './utils/pubsub.js';
+
 class Wallet {
     constructor(){
         this.balance = 0;
         this.keyPair = ec.genKeyPair();        
-        mempool.mempoolPubsub.addListener(transaction=>{
+        mempool.mempoolPubsub.addListener((transaction, {title})=>{
+            console.log('Processing tx update. Is_deleteUpdate:', title==KEYWORDS.DELETE_TRANSACTIONS, title);
+            if(title == KEYWORDS.DELETE_TRANSACTIONS)
+                return mempool.removeOutdatedTx(transaction);
             if(Transaction.validate(transaction,utxo))
                 mempool.addTransaction(transaction, 'network');
             else
@@ -34,6 +39,7 @@ class Wallet {
 
         this.selfUtxo = new Map();
         this.balance = this.calculateBalance();
+        // utxo.postUpdateTasks.push(this.calculateBalance);
     }
     sign(data){
         return this.keyPair.sign(hashSha256(data));
@@ -134,55 +140,12 @@ class Wallet {
             amount,
             inputUtxos: inputs
         });
-        console.log('Transaction created by this node:', tx.id);
         mempool.addTransaction(tx, 'own wallet');
-        return;
-
-
-       
-        console.log(tx);
         return tx;
     }
 }
 const wallet = new Wallet()
 console.log(`Public key of this node's wallet: ${minifyString(wallet.getPublicKey())}`)
-
-wallet.createTransaction({
-    receiverPublicKey: 'f31c95ffea529678caba829c2b7eb76c8aa7fec825fd0a528ede3a89a6e926c',
-    amount: 30
-});
-
-// wallet.createTransaction({
-//     receiverPublicKey: 'f31c95ffea529678caba829c2b7eb76c8aa7fec825fd0a528ede3a89a6e926c',
-//     amount: 59.521
-// });
-
-// Old dummy initializer
-// // Blockchain initializer
-// const initTransactions = [
-//     ["gp", "op", 3, 0.0005],
-//     ["pp", "gp", 9, 0.00002],
-//     // ["pp", "op", 3, 0.0002],
-//     // ["op", "gp", 6, 0.0015], 
-//     // ["op", "gp", 25, 0.525], 
-//     // ["op", "pp", 4, 0.845],
-//     // ["pp", "op", 6, 0.062],
-//     // ["pp", "op", 3, 1.052],
-// ];
-
-// if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
-//     for(let [sender, receiver, amount] of initTransactions)
-//         mempool.addTransaction(
-//             wallet.createTransaction({receiverPublicKey: receiver, amount})
-//         );
-
-// for(let [sender, receiver, amount] of initTransactions)
-//     mempool.addTransaction(
-//         wallet.createTransaction({receiverPublicKey: receiver, amount})
-//     );
-
-// if(process.env.NODE_ENV !== 'production' && process.argv[3] === 'dummy')
-//     for(let i=0; i<2; i++)    blockchain.mineBlock();
 
 
 

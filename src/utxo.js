@@ -3,31 +3,18 @@ import { Transaction, CoinbaseTransaction } from './classes/Transaction.js';
 class UTXO{
     constructor(){
         this.record = new Map();
-        
-
+        this.postUpdateTasks = [];
     }
     processSingleBlock(newBlock, recordMap = this.record){
         const {height, transactions} = newBlock;
         
-        // Special Coinbase transaction (0th)
-        const coinbase = transactions[0];
-        if(!CoinbaseTransaction.verify(coinbase, height)){
-            console.log('Something wrong with coinbase tx:');
-            console.log(coinbase)
-            return false;
-        }
-        recordMap.set(Transaction.hashUtxo({
-            id: coinbase.id,
-            index: 0
-        }), {
-            receiver: coinbase.outputs[0].receiver,
-            amount: coinbase.outputs[0].amount
-        });
+        let totalFees = 0;
 
         // Go through all transactions of the block.
         for(let i=1; i<transactions.length; i++){
 
-            const { id, inputs, outputs } = transactions[i];
+            const { id, inputs, outputs, fee } = transactions[i];
+            totalFees += fee;
 
             // Remove inputs from UTXO set
             inputs.forEach((input, index)=>{
@@ -52,7 +39,7 @@ class UTXO{
                     return false;
                 }
 
-                recordMap.delete(referencedUtxohash);
+                recordMap.delete(utxoID);
             })
 
             // Add all outputs into UTXO set
@@ -61,13 +48,30 @@ class UTXO{
 
                 // Set record for this output as UTXO
                 recordMap.set(
-                    Transaction.hashUTXO({ id, index}),
+                    Transaction.hashUtxo({ id, index}),
                     { receiver, amount }
                 );
             });
             
         }
+
+
+        // Special Coinbase transaction (0th)
+        const coinbase = transactions[0];
+        if(!CoinbaseTransaction.verify(coinbase, height, totalFees)){
+            console.log('Something wrong with coinbase tx:');
+            console.log(coinbase)
+            return false;
+        }
+        recordMap.set(Transaction.hashUtxo({
+            id: coinbase.id,
+            index: 0
+        }), {
+            receiver: coinbase.outputs[0].receiver,
+            amount: coinbase.outputs[0].amount
+        });
      
+        this.postUpdateTasks.forEach(fn => fn(this.record));
         return true;
     }
 
@@ -84,18 +88,14 @@ class UTXO{
         return true;
     }
 
-    addTx(transaction){
-
+    getUtxoRecord(){
+        return this.record;
     }
     hasUtxo(hash){
         return this.record.has(hash);
     }
     getUtxo(hash){
         return this.record.get(hash)
-    }
-
-    getUtxoRecord(){
-        return this.record;
     }
 
 }

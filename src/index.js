@@ -50,7 +50,8 @@ app.listen(PORT, ()=> {
 import blockchain from './Routes/blockchain.js';
 import mempool from './Routes/mempool.js';
 import wallet from './Routes/wallet.js';
-app.use('/api', blockchain, wallet, mempool);
+app.use('/api', blockchain);
+app.use('/api/mempool', mempool);
 app.use('/api/wallet', wallet);
 
 

@@ -18,8 +18,28 @@ class Mempool {
     getMempoolObj(){
         return this.mempool
     }
+    getTransactionsFor(publickey){
+        let filteredTx = [];
+        txloop:
+        for(let tx of this.mempool){
+            let { inputs, outputs } = tx;
+            for(let {receiver} of outputs)
+                if(receiver == publickey){
+                    filteredTx.push(tx);
+                    continue txloop;
+                }
+            
+            for(let {sender} of inputs)
+                if(sender == publickey){
+                    filteredTx.push(tx);
+                    continue;
+                }
+        }
+        return filteredTx;
+    }
     getMempool(page){
         let len = this.mempool.length;
+        
         if(len <= ENTRIES_PER_PAGE || !page)
             return  {
                 page: 1,
@@ -57,6 +77,10 @@ class Mempool {
             })
         console.log(`Added transaction #${transaction.id} to mempool from ${source}`);
         return true;
+    }
+    removeOutdatedTx(transaction){
+        let outdatedIds = transaction.forEach(tx => tx.id);
+        this.mempool = this.mempool.filter(tx => !outdatedIds.includes(tx.id));
     }
     removeTransactions(newBlock){
         this.mempool.splice(0, this.getBestTransactions().length);
