@@ -19,16 +19,10 @@ import { KEYWORDS } from './utils/pubsub.js';
 class Wallet {
     constructor(){
         this.balance = 0;
+        this.postTxBalance = 0;
+
         this.keyPair = ec.genKeyPair();        
-        mempool.mempoolPubsub.addListener((transaction, {title})=>{
-            console.log('Processing tx update. Is_deleteUpdate:', title==KEYWORDS.DELETE_TRANSACTIONS, title);
-            if(title == KEYWORDS.DELETE_TRANSACTIONS)
-                return mempool.removeOutdatedTx(transaction);
-            if(Transaction.validate(transaction,utxo))
-                mempool.addTransaction(transaction, 'network');
-            else
-                console.log(`Received invalid transaction from network #${transaction.id}`);
-        })
+        
 
         // Replacing pair, if key was cached earlier.
         let cachedPrivateKey = cache.getKey('private');
@@ -38,17 +32,38 @@ class Wallet {
             this.keyPair = ec.keyFromPrivate(cachedPrivateKey, 'hex');
 
         this.selfUtxo = new Map();
+        this.selfPendingUtxo = new Map();
+
         this.balance = this.calculateBalance();
-        // utxo.postUpdateTasks.push(this.calculateBalance);
+
+        mempool.mempoolPubsub.addListener((transaction, {title})=>{
+            if(title == KEYWORDS.DELETE_TRANSACTIONS){
+                return mempool.removeOutdatedTx(transaction.map(tx => tx.id));
+            }
+            if(Transaction.validate(transaction,utxo))
+                mempool.addTransaction(transaction, 'network');
+            else
+                console.log(`Received invalid transaction from network #${transaction.id}`);
+        });
+        blockchain.postUpdateTasks.push(()=>{
+            let outdatedTxIDs = [];
+            mempool.mempool.forEach(tx => {
+                if(!Transaction.validate(tx, utxo))
+                    outdatedTxIDs.push(tx.id);
+            });
+            mempool.removeOutdatedTx(outdatedTxIDs);
+        });
     }
     sign(data){
         return this.keyPair.sign(hashSha256(data));
+    }
+    getPostTxBalance(){
+        return this.postTxBalance;
     }
     getBalance(){
         return this.balance;
     }
     getPrivateKey(){
-        console.log(this.keyPair.getPrivate())
         return String(this.keyPair.getPrivate());
     }
     getPublicKey(){
@@ -60,6 +75,8 @@ class Wallet {
     
     calculateBalance(){
         let tempBalance = 0;
+        let tempPostTxBalance = 0;
+
         let pubKey = this.getPublicKey();
 
         this.selfUtxo.clear();
@@ -67,14 +84,21 @@ class Wallet {
         let utxos = utxo.getUtxoRecord();
 
         utxos.forEach((utxo, hash)=>{
-            const {receiver, amount} = utxo;
+            const {receiver, amount, pending} = utxo;
             if(receiver == pubKey){
+                if(pending){
+                    this.selfPendingUtxo.set(hash, utxo);
+                    tempPostTxBalance += pending;
+                }else{
+                    tempPostTxBalance += amount;
+                    this.selfUtxo.set(hash, utxo);
+                }
                 tempBalance += amount;
-                this.selfUtxo.set(hash, utxo);
             }
         });
 
         this.balance = tempBalance;
+        this.postTxBalance = tempPostTxBalance;
         console.log(`Recalculated balance for ${minifyString(pubKey)}: ${this.balance} OPs`);
         return this.balance;
     }
@@ -117,8 +141,6 @@ class Wallet {
             inputUtxos.push(closest);
         }
         
-        // console.log(lowUtxos);
-        // console.log(highUtxos);
 
         return inputUtxos;
     }
@@ -127,19 +149,28 @@ class Wallet {
 
     createTransaction({receiverPublicKey, amount}){
         this.calculateBalance();
+        let selfPublic = this.getPublicKey();
+
         if(amount > this.balance)
             throw new Error('Input amount exceeds, Transaction not possible');
 
         let inputs = this.getBestInputs(amount);
-        // console.log('Best inputs:');
-        // console.log(inputs);
-
+        
         let tx = new Transaction({
             senderWallet: this, 
             receiver: receiverPublicKey, 
             amount,
             inputUtxos: inputs
         });
+        let returnAmount = 0;
+        tx.outputs.forEach(({receiver, amount}) => {
+            if(receiver == selfPublic)
+                returnAmount += amount
+        });
+
+        inputs.forEach(({hash}) => utxo.setPending(hash, 0))
+        utxo.setPending(inputs[0].hash, returnAmount);
+
         mempool.addTransaction(tx, 'own wallet');
         return tx;
     }

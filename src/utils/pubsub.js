@@ -48,7 +48,7 @@ class PubSub{
                 if(typeof msgObject.message === 'string')
                     listener(msgObject.message);
                 else
-                    listener(msgObject.message.description, msgObject);
+                    listener(msgObject.message.description, msgObject.message);
             }
         });
     }

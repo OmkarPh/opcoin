@@ -18,9 +18,7 @@ const isValid = (chain) => {
         prevProof = prevBlock.proof;
         currProof = currBlock.proof;
         hash = currBlock.hashSelf();
-        
-        // Hashes must meet difficulty criteria
-        // TODO: Change this to meet dynamic difficulty
+
         if(hash.substr(0,3) != DIFFICULTY_ZEROES)
             return false;
         

@@ -17,16 +17,15 @@ class UTXO{
             totalFees += fee;
 
             // Remove inputs from UTXO set
-            inputs.forEach((input, index)=>{
+            for(let input of inputs){
                 const { utxoID, amount,  sender } = input;
-
 
                 // Checks if UTXO specified by this input actually exists
                 let referencedUTXO = recordMap.get(utxoID);
 
                 // If no record found, input is invalid, thus blockchain is invalid !
                 if(!referencedUTXO){
-                    console.log('No record found in tempRecord, thus declaring new block invalid !');
+                    console.log('No record found in tempRecord, thus declaring new block/chain invalid !');
                     return false;
                 }
 
@@ -40,7 +39,7 @@ class UTXO{
                 }
 
                 recordMap.delete(utxoID);
-            })
+            }
 
             // Add all outputs into UTXO set
             outputs.forEach((output, index)=>{
@@ -92,7 +91,15 @@ class UTXO{
         return this.record;
     }
     hasUtxo(hash){
-        return this.record.has(hash);
+        let UTXO = this.record.get(hash);
+        return UTXO && UTXO.pending ? false : true;
+    }
+    setPending(hash, postAmount = 0){
+        if(this.record.has(hash)){
+            this.record.get(hash).pending = postAmount;
+            return true;
+        }
+        return false;
     }
     getUtxo(hash){
         return this.record.get(hash)

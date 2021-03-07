@@ -22,12 +22,6 @@ function createInput(senderWallet, inputUtxos, outputs){
             sender: utxo.receiver,
             signature: senderWallet.sign(JSON.stringify(outputs))
         });
-        let verification = verifySignature({
-            publicKey: senderWallet.getPublicKey(),
-            data: [...outputs],
-            signature: inputs[inputs.length-1].signature
-        });
-        console.log('Verification:',verification);
     }
     return inputs;
 }

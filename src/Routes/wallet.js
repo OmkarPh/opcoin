@@ -10,7 +10,6 @@ router.get('/', (req,res)=>{
 
 
 router.post('/newTransaction', (req,res)=>{
-    console.log(req.body);
     const {receiverPublicKey, amount} = req.body;
     if(!receiverPublicKey || !amount)
         return res.status(400).json({message: 'Invalid request'});
@@ -32,7 +31,8 @@ router.get('/balance', async (req, res)=>{
         balance = wallet.calculateBalance();
     else
         balance = wallet.getBalance();
-    res.json({balance, publicKey: wallet.getPublicKey()});
+    let postTxBalance = wallet.getPostTxBalance();
+    res.json({balance, postTxBalance, publicKey: wallet.getPublicKey()});
 });
 
 router.get('/publicKey', (req,res)=>{

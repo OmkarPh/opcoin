@@ -78,8 +78,7 @@ class Mempool {
         console.log(`Added transaction #${transaction.id} to mempool from ${source}`);
         return true;
     }
-    removeOutdatedTx(transaction){
-        let outdatedIds = transaction.forEach(tx => tx.id);
+    removeOutdatedTx(outdatedIds){
         this.mempool = this.mempool.filter(tx => !outdatedIds.includes(tx.id));
     }
     removeTransactions(newBlock){

@@ -26,17 +26,17 @@ class Blockchain{
     constructor(){
         this.chain = [];
         this.nodeAddress = uuidv4().replace('-','');
+        this.postUpdateTasks = [];
         try{
             this.blockchainPubsub = new PubSub([CHANNELS.OPCOIN]);
             this.newNodePubsub = new PubSub([CHANNELS.NEW_NODE_REQUESTS]);
             this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
             
             // Retrieve blockchain from previous boot up
-            this.receiveUpdatedChain(cache.getKey('blockchain'), 'cache');
+            this.receiveUpdatedChain(cache.getKey('blockchain'), {}, 'cache');
             
             // Add temporary listener and request blockchain updates
             this.newNodePubsub.addListener(msgObject=>{
-                console.log('Publishing the chain to needies ', msgObject);
                 this.newNodePubsub.publish({
                     title: "Init chain", 
                     description: this.chain
@@ -74,7 +74,6 @@ class Blockchain{
         return hashedChain(page, this.chain)
     }
     isValid(chainToValidate=this.chain){
-        // if(!chainToValidate)    chainToValidate = this.chain;
         return isValidChain(chainToValidate);
     }
     getLastBlock(){ 
@@ -101,6 +100,7 @@ class Blockchain{
 
                 return true;
             }
+
             return false;
         }catch(e){
             console.error("Error ocurred while copying new synced chain!!");
@@ -108,7 +108,7 @@ class Blockchain{
             return false;
         }
     }
-    receiveUpdatedChain(newChain, source='network'){
+    receiveUpdatedChain(newChain, msgObj, source='network'){
         try{
             let blockchain = this;
             if(!newChain)   return;
@@ -118,11 +118,15 @@ class Blockchain{
                 if(blockchain.copyChain(newChain))
                     console.log(`Copied chain with length ${newChain.length} from ${source}`);
                 else
-                    console.log(`Received an invalid chain with length ${newChain.length} from ${source}`);
+                    console.log(`Rejected an invalid chain with length ${newChain.length} from ${source}`);
             }else
-                console.log(`Received a shorter chain with length ${newChain.length} from ${source}`);
+                console.log(`Rejected a shorter chain with length ${newChain.length} from ${source}`);
 
-            utxo.replaceFromChain(newChain);                
+            // Caching correct chain to cache
+            cache.setKey('blockchain', this.chain);
+
+            // Post update tasks
+            this.postUpdateTasks.forEach(fn => fn());
         }catch(e){
             console.log(e);
             console.log('Something weird happened when received new blockchain !');
