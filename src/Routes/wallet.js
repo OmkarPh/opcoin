@@ -24,6 +24,10 @@ router.post('/newTransaction', (req,res)=>{
         res.status(200).json({txID: newTx.id, message: "Transaction successfully added to the mempool! You'll see it in a block soon :)"})
 });
 
+router.get('/utxo', (req, res)=>{
+    res.status(200).json(Array.from(wallet.getSelfUtxo().entries()));
+});
+
 router.get('/balance', async (req, res)=>{
     let calculate = req.query.calculate ? true : false;
     let balance = 0;

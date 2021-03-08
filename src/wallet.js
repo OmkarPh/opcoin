@@ -60,6 +60,9 @@ class Wallet {
     getPostTxBalance(){
         return this.postTxBalance;
     }
+    getSelfUtxo(){
+        return this.selfUtxo;
+    }
     getBalance(){
         return this.balance;
     }
@@ -72,7 +75,6 @@ class Wallet {
     createCoinbase(height, fees){
         return new CoinbaseTransaction(height, this.getPublicKey(), fees);
     }
-    
     calculateBalance(){
         let tempBalance = 0;
         let tempPostTxBalance = 0;
@@ -86,7 +88,7 @@ class Wallet {
         utxos.forEach((utxo, hash)=>{
             const {receiver, amount, pending} = utxo;
             if(receiver == pubKey){
-                if(pending){
+                if(pending != undefined && pending >= 0){
                     this.selfPendingUtxo.set(hash, utxo);
                     tempPostTxBalance += pending;
                 }else{
@@ -114,18 +116,16 @@ class Wallet {
 
         for(let [hash, utxo] of this.selfUtxo.entries()){
             if(utxo.amount <= amount){
-                lowTotal += utxo.amount;
+                lowTotal += Number(utxo.amount);
                 lowUtxos.push({utxo, hash});
-                if(lowTotal >= amount)
+                if(lowTotal >= Number(amount))
                     break;
             }
             else
                 highUtxos.push({utxo, hash});
         }
-
-
         if(lowTotal >= amount){
-            lowUtxos.sort((a, b) => a.amount - b.amount);
+            lowUtxos.sort((a, b) => a.utxo.amount - b.utxo.amount);
             for(let utxo of lowUtxos){
                 inputTotal += utxo.utxo.amount;
                 inputUtxos.push(utxo);
@@ -172,6 +172,7 @@ class Wallet {
         utxo.setPending(inputs[0].hash, returnAmount);
 
         mempool.addTransaction(tx, 'own wallet');
+        this.calculateBalance();
         return tx;
     }
 }

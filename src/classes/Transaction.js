@@ -148,13 +148,16 @@ class CoinbaseTransaction{
             console.log(coinbaseTransaction);
             return false;
         }
-
         if(inputs[0].amount != suitableReward || outputs[0].amount != suitableReward){
-            console.log(`Actual amounts: Input:${inputs[0].amount}, output:${outputs[0].amount}`);
-            console.log(`Ideal amounts: Input:${suitableReward-fees}, output:${suitableReward}`);
-            return false;
+            let diffInp = suitableReward - Number(inputs[0].amount);
+            let diffOut = suitableReward - Number(outputs[0].amount);
+            let differenceExceeded = diffInp < 0 || diffOut < 0 || diffInp > 0.00005 || diffOut > 0.00005;
+            if(!differenceAllowed){
+                console.log(`Actual amounts: Input:${inputs[0].amount}, output:${outputs[0].amount}`);
+                console.log(`Ideal amounts: Input:${suitableReward-fees}, output:${suitableReward}`);
+                return false;
+            }
         }
-        
         return true;
     }
 }

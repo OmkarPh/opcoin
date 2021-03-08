@@ -92,7 +92,10 @@ class UTXO{
     }
     hasUtxo(hash){
         let UTXO = this.record.get(hash);
-        return UTXO && UTXO.pending ? false : true;
+        if(UTXO)
+            if(UTXO.pending != undefined && UTXO.pending >= 0)
+                return false;
+        return true;
     }
     setPending(hash, postAmount = 0){
         if(this.record.has(hash)){
