@@ -1,6 +1,7 @@
 import React, {useEffect, useState, useRef } from 'react'
 import axios from 'axios';
 import { Container, Table, Row, Col, Button } from 'react-bootstrap';
+import {Helmet} from 'react-helmet';
 import HashLoader from "react-spinners/HashLoader";
 import Loader from '../components/Loader';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -10,7 +11,9 @@ import queryString from 'query-string';
 
 import Pagination from '../components/Pagination';
 
-import fillRemainingRows from '../utility/remainingRows.js';
+import fillRemainingRows from '../utility/remainingRows';
+
+import TableWrapper from './blockchain.styled';
 
 const Blockchain = (props) => {
 
@@ -62,6 +65,7 @@ const Blockchain = (props) => {
 
     return (
         <Container>
+            <Helmet title={`Blockchain explorer`} />
             {
                 blockchain ?
                     <div>
@@ -88,33 +92,41 @@ const Blockchain = (props) => {
                         </Row>
                         <br/>
                         
-                        <Table striped={true} bordered hover size="sm" responsive>
-                            <thead>
-                                <tr>
-                                <th>#</th>
-                                <th>Transactions</th>
-                                <th>Mined</th>
-                                <th>Hash</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {
-                                    blockchain.chain.map(block => {
-                                        return(
-                                            <tr key={block.hash}>
-                                                <td>{block.height}</td>
-                                                <td>{block.transactions.length}</td>
-                                                <td>{getRelativeTime(block.timestamp)}</td>
-                                                <td className="fa-ellipsis-h" >{block.hash}</td>
-                                            </tr>
-                                        )
-                                    })
-                                }
-                                { 
-                                    fillRemainingRows(blockchain.chain.length)
-                                }
-                            </tbody>
-                            </Table>
+                        <TableWrapper>
+                            <Table striped={true} bordered hover size="sm" responsive>
+                                <thead>
+                                    <tr>
+                                    <th>#</th>
+                                    <th>Transactions</th>
+                                    <th>Mined</th>
+                                    <th>Hash</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-center">
+                                    {
+                                        blockchain.chain.map(block => {
+                                            return(
+                                                <tr key={block.hash}>
+                                                    <td>{block.height}</td>
+                                                    <td>{block.transactions.length}</td>
+                                                    <td>{getRelativeTime(block.timestamp)}</td>
+                                                    <td className="fa-ellipsis-h hashCol md-col-4 text-left" >
+                                                        {
+                                                            window && window.innerWidth <= 767 ?
+                                                            block.hash.substr(0, 18) + "..."
+                                                            : block.hash
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })
+                                    }
+                                    { 
+                                        fillRemainingRows(blockchain.chain.length)
+                                    }
+                                </tbody>
+                                </Table>
+                            </TableWrapper>
                             <Pagination page={page} setPage={setPage} pagination={pagination} />
                     </div> 
                     : 

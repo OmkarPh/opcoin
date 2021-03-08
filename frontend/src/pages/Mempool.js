@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Container, Table, Row, Col, Button } from 'react-bootstrap';
 import HashLoader from "react-spinners/HashLoader";
 import Loader from '../components/Loader';
+import {Helmet} from 'react-helmet';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import getRelativeTime from '../utility/relativeTime';
@@ -62,6 +63,7 @@ const Mempool = (props) => {
 
     return (
         <Container>
+            <Helmet title={`Transaction pool`} />
             {
                 transactions ?
                     <div>

@@ -6,6 +6,13 @@ import blockchain from '../blockchain.js';
 import wallet from '../wallet.js'; 
 import utxo from '../utxo.js';
 
+router.get('/block/:blockNo', (req,res)=>{
+    let block = blockchain.getBlock(req.params.blockNo);
+    if(block)
+        return res.status(200).json({...block, hash: block.hashSelf()});
+    res.status(400).json({message: "Invalid block no. requested !"});
+})
+
 router.get('/blockchain', async (req,res)=>{
     let page = req.query.page ? Math.round(parseInt(req.query.page)) : 1;
     if(!page)   page = 1;
