@@ -1,7 +1,11 @@
 import React, {useState, useEffect} from 'react'
 import {Link} from 'react-router-dom';
-import {Container, ListGroup, Row, Col} from 'react-bootstrap';
+import HashLoader from "react-spinners/HashLoader";
+import {Container, ListGroup, Row, Col, Button} from 'react-bootstrap';
 import { Helmet } from 'react-helmet';
+
+import Loader from '../components/Loader';
+import Transaction from '../components/Transaction';
 
 import axios from 'axios';
 import minify from '../utility/minify';
@@ -31,7 +35,6 @@ const Block = (props) => {
               res.data.timestamp = `${dateTime.toDateString()}, ${dateTime.toLocaleTimeString()}`;
               setTransactions(res.data.transactions);
               setBlock(res.data);
-              console.log(transactions)
           })
           .catch(err => setError(err.response.data));
     }, []);
@@ -49,10 +52,12 @@ const Block = (props) => {
                 : block ?
                     <Container className="align-self-md-start mt-lg-3" style={{fontSize: "18px"}}>
                         <Helmet title={`Block ${block.height}`} />
+                        <Link as="link" to="/blockchain" className="mb-4 pt-0 d-block">
+                            {'<- All blocks'}
+                        </Link>
                         <h2>
                             Block #{block.height}
                         </h2>
-                        <br/>
                         <ListGroup variant="flush">
                             <Entry label="Hash" 
                                 content={
@@ -78,10 +83,18 @@ const Block = (props) => {
                                 : minify(block.prevHash, 32)
                             } />
                             <Entry label="No. of transactions" content={block.transactions.length} />
-                            <h4 className="mt-4">Transactions</h4>
+                            <Row>
+                                <h4 className="my-4">Transactions</h4>
+                            </Row>
+                            {
+                                transactions.map(tx => <Transaction tx={tx} />)
+                            }
                         </ListGroup>                        
                     </Container>
-                : "Loading ...."
+                : 
+                <Loader>
+                    <HashLoader color={"#0466cf"} loading={true} size={150} />
+                </Loader>
             }
         </div>
     )

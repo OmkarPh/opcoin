@@ -1,5 +1,6 @@
 import React, {useEffect, useState, useRef } from 'react'
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { Container, Table, Row, Col, Button } from 'react-bootstrap';
 import {Helmet} from 'react-helmet';
 import HashLoader from "react-spinners/HashLoader";
@@ -74,9 +75,9 @@ const Blockchain = (props) => {
                             <Col md="0" lg="6" ></Col>
                             <Col sm="8" md="6" lg="3">
                                 <Button
-                                variant="primary"
-                                disabled={isSyncing}
-                                onClick={!isSyncing ? ()=>syncChain(false) : null}
+                                    variant="primary"
+                                    disabled={isSyncing}
+                                    onClick={!isSyncing ? ()=>syncChain(false) : null}
                                 >
                                 { isSyncing ?'Sync in progress ':'Sync Blockchain' }
                                 &nbsp;&nbsp;
@@ -107,7 +108,11 @@ const Blockchain = (props) => {
                                         blockchain.chain.map(block => {
                                             return(
                                                 <tr key={block.hash}>
-                                                    <td>{block.height}</td>
+                                                    <td>
+                                                        <Link to={`block/${block.height}`}>
+                                                            {block.height}
+                                                        </Link>
+                                                    </td>
                                                     <td>{block.transactions.length}</td>
                                                     <td>{getRelativeTime(block.timestamp)}</td>
                                                     <td className="fa-ellipsis-h hashCol md-col-4 text-left" >

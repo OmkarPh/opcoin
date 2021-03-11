@@ -5,7 +5,13 @@ import blockchain from '../blockchain.js';
 import wallet from '../wallet.js';
 
 router.get('/', (req,res)=>{
-    res.json(wallet);
+    const { balance, postTxBalance } = wallet;
+    res.json({
+        balance,
+        postTxBalance,
+        publicKey: wallet.getPublicKey(),
+        privateKey: wallet.getPrivateKey()
+    });
 })
 
 
