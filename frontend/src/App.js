@@ -11,8 +11,8 @@ import Mempool from './pages/Mempool';
 import Miner from './pages/Miner';
 import Wallet from './pages/Wallet';
 import Block from './pages/Block';
+import Info from './pages/Info';
 
-import axios from 'axios';
 
 function App() {
   return (
@@ -25,8 +25,9 @@ function App() {
             <Route path='/blockchain' component={Blockchain} exact />
             <Route path='/transactions' component={Mempool} exact />
             <Route path='/mine' component={Miner} exact />
-            <Route path='/block/:blockNo' component={Block} blockNo={5}/>
+            <Route path='/block/:blockNo' component={Block}/>
             <Route path='/wallet' component={Wallet} exact />
+            <Route path='/info/:about' component={Info} exact />
           </Switch>
         </main>
       <Footer />

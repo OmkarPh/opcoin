@@ -21,12 +21,10 @@ const Header = () => {
         <Nav className="mr-auto ml-10">
         <Button as={Link} to="/blockchain">Blockchain</Button>
         <Button as={Link} to="/transactions">Transactions</Button>
-        <NavDropdown title="Utilities" id="collasible-nav-dropdown">
-            <NavDropdown.Item href="#action/3.1">Mempool history</NavDropdown.Item>
-            <NavDropdown.Item href="#action/3.2">Block details</NavDropdown.Item>
-            <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
-            <NavDropdown.Divider />
-            <NavDropdown.Item href="#action/3.4">Separated link</NavDropdown.Item>
+        <NavDropdown title="Info" id="collasible-nav-dropdown">
+            <NavDropdown.Item as={Link} to="/info/blockchain">Blockchain</NavDropdown.Item>
+            <NavDropdown.Item as={Link} to="/info/project">OP coin project structure</NavDropdown.Item>
+            <NavDropdown.Item as={Link} to="/info/pubsub">PubSub model</NavDropdown.Item>
         </NavDropdown>
         </Nav>
         <Nav>

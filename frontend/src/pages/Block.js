@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react'
+import { useParams } from 'react-router-dom';
 import {Link} from 'react-router-dom';
 import HashLoader from "react-spinners/HashLoader";
 import {Container, ListGroup, Row, Col, Button} from 'react-bootstrap';
@@ -21,7 +22,7 @@ const Entry = ({label, content}) => {
 }
 
 const Block = (props) => {
-    const blockNo = props.match.params.blockNo;
+    const { blockNo } = useParams();
     const [block, setBlock] = useState(undefined);
     const [transactions, setTransactions] = useState(undefined);
     const [error, setError] = useState(undefined);

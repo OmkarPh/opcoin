@@ -52,7 +52,17 @@ class Blockchain{
             setTimeout(()=>{
                 console.log(`Unsubscribing and initialization response channel after ${INIT_LISTEN}ms`);
                 if(tempPubsub)
-                    tempPubsub.unsubscribeAll();            
+                    tempPubsub.unsubscribeAll();       
+
+                this.blockchainPubsub.publish({
+                    title: "Initial broadcast", 
+                    description: this.chain
+                })
+                .catch(err => {
+                    console.log(err);
+                    console.log('Something wrong happened while publishing newly mined chain !');
+                    return -1;
+                });     
             }, INIT_LISTEN);
         }catch(e){
             console.log(e)
