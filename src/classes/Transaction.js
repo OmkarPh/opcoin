@@ -97,9 +97,12 @@ export default class Transaction{
 
         let totalOutput = 0;
         outputs.forEach(({amount})=>totalOutput+=amount);
+        totalOutput += fee;
 
-                    
-        if(totalInput !== totalOutput + fee){
+        let largeOutput = totalOutput > totalInput;
+        let largeDifference = (totalInput - totalOutput) > 0.00005;
+
+        if(largeOutput || largeDifference){
             console.log('Invalid transaction denominations in following transaction:');
             console.log(transaction);
             console.log(`Verifying transaction...TotalInput: ${totalInput} TotalOutput: ${totalOutput}, Fee: ${fee}`);
