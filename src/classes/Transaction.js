@@ -35,8 +35,9 @@ export default class Transaction{
         let [fees, amountSelf] = this.calculateFeesAndReturns(inputUtxos, amount); 
         this.fee = fees
 
-        this.outputs = createOutput({senderWallet, receiver, amount, amountSelf});
+        console.log('Self amount in Tx constructor', amountSelf, typeof amountSelf);
 
+        this.outputs = createOutput({senderWallet, receiver, amount, amountSelf});
         this.inputs = createInput(senderWallet, inputUtxos, this.outputs);
 
         this.id = Transaction.hash({
@@ -51,8 +52,11 @@ export default class Transaction{
     calculateFeesAndReturns(inputUtxos, sendAmount){        
         let totalInput = 0;
         for(const {utxo:{amount}} of inputUtxos)
-            totalInput += amount
+            totalInput += Number(amount)
         
+        console.log('Total input:', totalInput, typeof totalInput);
+        console.log('Send amount:', sendAmount, typeof sendAmount);
+
         let fees=0;
         let returns = totalInput-sendAmount;
 
@@ -61,7 +65,13 @@ export default class Transaction{
             fees = 0.0005;
             returns -= 0.0005;
         }
+
+        fees = Number(fees.toFixed(7));
+        returns = Number(returns.toFixed(7));
         
+        console.log(typeof fees, typeof returns);
+
+
         return [fees, returns];
     }
 
@@ -152,7 +162,7 @@ class CoinbaseTransaction{
             let diffInp = suitableReward - Number(inputs[0].amount);
             let diffOut = suitableReward - Number(outputs[0].amount);
             let differenceExceeded = diffInp < 0 || diffOut < 0 || diffInp > 0.00005 || diffOut > 0.00005;
-            if(!differenceAllowed){
+            if(differenceExceeded){
                 console.log(`Actual amounts: Input:${inputs[0].amount}, output:${outputs[0].amount}`);
                 console.log(`Ideal amounts: Input:${suitableReward-fees}, output:${suitableReward}`);
                 return false;

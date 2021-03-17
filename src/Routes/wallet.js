@@ -5,6 +5,7 @@ import blockchain from '../blockchain.js';
 import wallet from '../wallet.js';
 
 router.get('/', (req,res)=>{
+    wallet.calculateBalance();
     const { balance, postTxBalance } = wallet;
     res.json({
         balance,
@@ -16,9 +17,13 @@ router.get('/', (req,res)=>{
 
 
 router.post('/newTransaction', (req,res)=>{
-    const {receiverPublicKey, amount} = req.body;
+    let {receiverPublicKey, amount} = req.body;
+    amount = Number(amount);
+    
     if(!receiverPublicKey || !amount)
         return res.status(400).json({message: 'Invalid request'});
+
+
     let newTx = wallet.createTransaction({receiverPublicKey,amount})
     
     if(!newTx)
