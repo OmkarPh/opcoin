@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import {Link} from 'react-router-dom';
 import {Container, Row, Col, Button, Card, InputGroup, Form, FormControl} from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
@@ -41,7 +42,6 @@ const Wallet = () => {
           .get("/api/wallet/utxo")
           .then(res => {
               setTimeout(()=>{
-                console.log(res.data);
                 setUtxos(res.data);
             })
           })
@@ -55,10 +55,7 @@ const Wallet = () => {
             // Create transaction
             let receiverPublicKey = receiver.toLowerCase();
 
-            console.log('Processing transaction');
-            console.log(sendAmount, '->', receiverPublicKey);
             setCreatingTx(true);
-
             axios
               .post("/api/wallet/newTransaction", {
                 receiverPublicKey,
@@ -80,8 +77,10 @@ const Wallet = () => {
                   }
               })
               .catch(err => {
-                setMessage({success: false, text: 'Some error occured while adding the transaction :('});
-                console.error(err);
+                if(err.response.status == 406)
+                    setMessage({success: false, text: err.response.data.message});
+                else
+                    setMessage({success: false, text: 'Some error occured while adding the transaction :('});
                 setCreatingTx(false);
               });
         }else{
@@ -101,7 +100,10 @@ const Wallet = () => {
                 variant="primary"
                 className="mb-3"
                 disabled={isSyncing}
-                onClick={!isSyncing ? ()=>fetchDetails() : null}
+                onClick={!isSyncing ? ()=>{
+                    fetchDetails();
+                    fetchUtxos();
+                } : null}
             >
                 {isSyncing ? 'Sync in progress .....' : 'Sync'}
             </Button>
@@ -142,6 +144,14 @@ const Wallet = () => {
                     <Button onClick={()=>window && window.navigator.clipboard.writeText(wallet.privateKey)}>
                         <FontAwesomeIcon icon={faCopy} />
                     </Button>
+                </Col>
+            </Row>
+
+            <Row>
+                <Col>
+                    <Link as="link" to="/keyChange" className="pt-2 d-block" style={{color:'red'}}>
+                        {'Change Private key?'}
+                    </Link>
                 </Col>
             </Row>
 
@@ -234,7 +244,7 @@ const Wallet = () => {
                     {message.text}
                 </span>
 
-            </Form>
+                </Form>
         <br />
             
 

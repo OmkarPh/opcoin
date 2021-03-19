@@ -1,4 +1,5 @@
 import path from 'path';
+import { stringify as flattedStringify } from 'flatted';
 import { ec, verifySignature } from './utils/ec.js';
 import hashSha256 from './utils/hash.js';
 import Transaction, {CoinbaseTransaction} from './classes/Transaction.js';
@@ -15,14 +16,16 @@ import mempool from './mempool.js';
 import utxo from './utxo.js';
 
 import { KEYWORDS } from './utils/pubsub.js';
+import { BALANCE_TIMEOUT } from './CONSTANTS/index.js';
 
 class Wallet {
     constructor(){
         this.balance = 0;
         this.postTxBalance = 0;
 
-        this.keyPair = ec.genKeyPair();        
-        
+        this.keyPair = ec.genKeyPair();
+
+        this.lastCalculated = Date.now() - BALANCE_TIMEOUT - 2000;
 
         // Replacing pair, if key was cached earlier.
         let cachedPrivateKey = cache.getKey('private');
@@ -67,15 +70,38 @@ class Wallet {
         return this.balance;
     }
     getPrivateKey(){
-        return String(this.keyPair.getPrivate());
+        let pk = flattedStringify(this.keyPair.getPrivate());
+        return pk.substring(2, pk.length-2);
     }
     getPublicKey(){
         return this.keyPair.getPublic().encode('hex');
     }
+    setPrivateKey(newPrivateKey){
+        if(typeof newPrivateKey != 'string')
+            throw new Error('Expected new private key to be a string');
+            
+        newPrivateKey = newPrivateKey.toLowerCase();
+        if(!/^[a-f0-9]{64}$/.test(newPrivateKey))
+            throw new Error('Invalid private key !!');
+
+        this.keyPair = ec.keyFromPrivate(newPrivateKey, 'hex');
+        cache.setKey('private', this.keyPair.getPrivate());
+        
+        console.log();
+        console.log(`Changed privated key !!   New pair:`);
+        console.log(this.getPrivateKey());
+        console.log(this.getPublicKey());
+        console.log();
+
+        this.calculateBalance(true);
+    }
     createCoinbase(height, fees){
         return new CoinbaseTransaction(height, this.getPublicKey(), fees);
     }
-    calculateBalance(){
+    calculateBalance(forced=false){
+        if(!forced && Date.now() - this.lastCalculated < BALANCE_TIMEOUT)
+            return this.balance;
+
         let tempBalance = 0;
         let tempPostTxBalance = 0;
 
@@ -102,7 +128,7 @@ class Wallet {
         this.balance = tempBalance;
         this.postTxBalance = tempPostTxBalance;
         console.log(`Recalculated balance for ${minifyString(pubKey)}: ${this.balance} OPs`);
-        return this.balance;
+        this.lastCalculated = Date.now();        return this.balance;
     }
 
     getBestInputs(amount){
@@ -152,7 +178,7 @@ class Wallet {
         let selfPublic = this.getPublicKey();
 
         if(amount > this.balance)
-            throw new Error('Input amount exceeds, Transaction not possible');
+            throw new Error(`Input amount exceeds your balance ( ${this.balance} OP coins ), Transaction not possible !!`);
 
         let inputs = this.getBestInputs(amount);
         
@@ -178,12 +204,6 @@ class Wallet {
 }
 const wallet = new Wallet()
 console.log(`Public key of this node's wallet: ${minifyString(wallet.getPublicKey())}`)
-
-
-
-
-
-
 
 
 export default wallet;

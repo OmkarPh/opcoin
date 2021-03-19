@@ -1,16 +1,16 @@
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
-import { Container } from 'react-bootstrap'
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
 import {Helmet} from 'react-helmet';
 import Header from './components/Header'
 import Footer from './components/Footer'
 import './App.css';
 
-import Home from './pages/Home'
-import Blockchain from './pages/Blockchain'
+import Home from './pages/Home';
+import Blockchain from './pages/Blockchain';
 import Mempool from './pages/Mempool';
 import Miner from './pages/Miner';
 import Wallet from './pages/Wallet';
 import Block from './pages/Block';
+import ChangePrivateKey from './pages/ChangePrivate';
 import Info from './pages/Info';
 
 
@@ -28,6 +28,8 @@ function App() {
             <Route path='/block/:blockNo' component={Block}/>
             <Route path='/wallet' component={Wallet} exact />
             <Route path='/info/:about' component={Info} exact />
+            <Route path='/keyChange' component={ChangePrivateKey} exact />
+            <Redirect to='/' />
           </Switch>
         </main>
       <Footer />

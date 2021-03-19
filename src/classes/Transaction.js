@@ -35,8 +35,6 @@ export default class Transaction{
         let [fees, amountSelf] = this.calculateFeesAndReturns(inputUtxos, amount); 
         this.fee = fees
 
-        console.log('Self amount in Tx constructor', amountSelf, typeof amountSelf);
-
         this.outputs = createOutput({senderWallet, receiver, amount, amountSelf});
         this.inputs = createInput(senderWallet, inputUtxos, this.outputs);
 
@@ -54,9 +52,6 @@ export default class Transaction{
         for(const {utxo:{amount}} of inputUtxos)
             totalInput += Number(amount)
         
-        console.log('Total input:', totalInput, typeof totalInput);
-        console.log('Send amount:', sendAmount, typeof sendAmount);
-
         let fees=0;
         let returns = totalInput-sendAmount;
 
@@ -69,7 +64,6 @@ export default class Transaction{
         fees = Number(fees.toFixed(7));
         returns = Number(returns.toFixed(7));
         
-        console.log(typeof fees, typeof returns);
 
 
         return [fees, returns];
