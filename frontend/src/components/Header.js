@@ -31,7 +31,6 @@ const Header = () => {
         <Button as={Link} to="/wallet" variant="success">Wallet</Button>
         <Nav.Link></Nav.Link>
         <Button as={Link} to="/mine" variant="warning">Mine a block</Button>
-        <Button as={Link} to="/about" variant="Primary">About</Button>
         </Nav>
     </Navbar.Collapse>
     </Navbar>
