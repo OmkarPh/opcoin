@@ -86,6 +86,26 @@ class Blockchain{
     isValid(chainToValidate=this.chain){
         return isValidChain(chainToValidate);
     }
+    getTransactionsFor(publickey){
+        let filteredTx = [];
+        for(let {transactions} of this.chain){          
+            txloop:
+            for(let tx of transactions){
+                let { inputs, outputs, id } = tx;
+                for(let {receiver} of outputs)
+                    if(receiver == publickey){
+                        filteredTx.push(tx);
+                        continue txloop;
+                    }
+                for(let {sender} of inputs)
+                    if(sender == publickey){
+                        filteredTx.push(tx);
+                        continue;
+                    }
+            }
+        }
+        return filteredTx;
+    }
     getLastBlock(){ 
         if(this.chain.length == 0)      
             return null;

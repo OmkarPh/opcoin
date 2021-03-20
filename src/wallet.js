@@ -37,7 +37,7 @@ class Wallet {
         this.selfUtxo = new Map();
         this.selfPendingUtxo = new Map();
 
-        this.balance = this.calculateBalance();
+        this.balance = this.calculateBalance(true);
 
         mempool.mempoolPubsub.addListener((transaction, {title})=>{
             if(title == KEYWORDS.DELETE_TRANSACTIONS){
@@ -174,7 +174,7 @@ class Wallet {
 
 
     createTransaction({receiverPublicKey, amount}){
-        this.calculateBalance();
+        this.calculateBalance(true);
         let selfPublic = this.getPublicKey();
 
         if(amount > this.balance)
@@ -198,7 +198,7 @@ class Wallet {
         utxo.setPending(inputs[0].hash, returnAmount);
 
         mempool.addTransaction(tx, 'own wallet');
-        this.calculateBalance();
+        this.calculateBalance(true);
         return tx;
     }
 }

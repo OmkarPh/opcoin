@@ -8,7 +8,7 @@ import balance from '../assets/images/balance.jpg'
 const Home = () => {
     return (
         <Container>
-            <h3> What is OP coin </h3><br/>
+            <h3> What is OP coin ?</h3><br/>
             <p className="lead">
                 OP coin infrastructure is an entire blockchain built from <u>scratch</u> using React and Node.js. <br/>
                 'OP coin' is the token mechanism built on top of this blockchain that allows transactions in the form of UTXOs (Unspent transaction output) similar to Bitcoin

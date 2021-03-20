@@ -1,7 +1,8 @@
 import React from 'react'
-import { Row, Col } from 'react-bootstrap'
+import { Row, Col, Button } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
 
 import minify from '../utility/minify';
 
@@ -16,8 +17,24 @@ const Transaction = ({tx}) => {
                     tx.inputs.map(inp => {
                         return(
                             <Row>
-                                <Col xs={8}>
+                                <Col xs={8} alt={inp.sender}>
                                     {minify(inp.sender, 35)}
+                                    {
+                                        inp.sender != 'COINBASE' ?
+                                        <Button
+                                            className="" 
+                                            variant="light"  
+                                            onClick={(e)=>{
+                                                e.preventDefault();
+                                                window && window.navigator.clipboard.writeText(inp.sender)
+                                            }}
+                                        >
+                                            <small>
+                                                <FontAwesomeIcon icon={faCopy} />
+                                            </small>
+                                        </Button>
+                                        : null
+                                    }
                                 </Col>
                                 <Col>
                                     {Number(inp.amount).toFixed(5)} OPs
@@ -39,6 +56,22 @@ const Transaction = ({tx}) => {
                             <Row>
                                 <Col xs={8}>
                                     {minify(out.receiver, 35)}
+                                    {
+                                        out.receiver != 'COINBASE' ?
+                                        <Button
+                                            className="" 
+                                            variant="light"  
+                                            onClick={(e)=>{
+                                                e.preventDefault();
+                                                window && window.navigator.clipboard.writeText(out.receiver)
+                                            }}
+                                        >
+                                            <small>
+                                                <FontAwesomeIcon icon={faCopy} />
+                                            </small>
+                                        </Button>
+                                        : null
+                                    }
                                 </Col>
                                 <Col>
                                     {Number(out.amount).toFixed(5)} OPs

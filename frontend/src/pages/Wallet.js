@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import {Link} from 'react-router-dom';
 import {Container, Row, Col, Button, Card, InputGroup, Form, FormControl} from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faExternalLinkAlt, faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
 
 import axios from 'axios';
 
@@ -70,6 +70,8 @@ const Wallet = () => {
                     setReceiver('');
                     setCreatingTx(false);
                     setSendAmount(0);
+                    fetchDetails();
+                    fetchUtxos();
                   }
                   else{
                     setMessage({success: false, text: res.data.message});
@@ -107,6 +109,9 @@ const Wallet = () => {
             >
                 {isSyncing ? 'Sync in progress .....' : 'Sync'}
             </Button>
+            <Link className="float-right" target="_blank" to="/transactions/myTx">
+                My transactions &nbsp; <FontAwesomeIcon icon={faExternalLinkAlt} />
+            </Link>
             <Row sm={12} md={6} lg={4}>
                 <Col xs={6}>
                     <h5>Your balance:</h5>

@@ -10,10 +10,10 @@ import Loader from '../components/Loader';
 import HashLoader from "react-spinners/HashLoader";
 
 
-const ChangePrivateKey = () => {
+const ChangePrivateKey = (props) => {
     const [wallet, setWallet] = useState(undefined);
     const [hidden, setHidden] = useState(true);
-    const [message, setMessage] = useState({success: true, text: ''});
+    const [message, setMessage] = useState({success: false, text: ''});
 
     const [changingPrivateKey, setChangingPrivateKey] = useState(false);
 
@@ -53,6 +53,9 @@ const ChangePrivateKey = () => {
                     setConsent(false);
                     setNewKey('');
                     setChangingPrivateKey(false);
+                    setTimeout(()=>{
+                        props.history.push('/wallet')
+                    }, 2000);
                     fetchDetails();
                 }
                 else{
@@ -169,9 +172,13 @@ const ChangePrivateKey = () => {
                 <br/><br/>
 
                 <span className={message.success ? 'text-success' : 'text-danger'}>
-                    {message.text}
+                    { message.text }
                 </span>
-
+                <br/>
+                <span className='text-warning'>
+                    { message.success ? 'Redirecting you to the wallets page ...' : '' }
+                </span>    
+                
                 </Form>
             <br />
 

@@ -93,7 +93,7 @@ export default class Transaction{
         outputs.forEach(({amount})=>totalOutput+=amount);
         totalOutput += fee;
 
-        let largeOutput = totalOutput > totalInput;
+        let largeOutput = (totalOutput - totalInput) > 0.000005 ;
         let largeDifference = (totalInput - totalOutput) > 0.00005;
 
         if(largeOutput || largeDifference){

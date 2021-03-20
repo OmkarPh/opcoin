@@ -34,6 +34,13 @@ router.post('/mineBlock', (req,res)=>{
     }
 });
 
+router.get('/tx/:publicKey', (req, res)=>{
+    let publicKey = req.params.publicKey;
+    if(publicKey == 'myTx')
+        publicKey = wallet.getPublicKey();
+    res.status(200).json(blockchain.getTransactionsFor(publicKey));
+});
+
 router.get('/validity', (req,res)=>{
     if(blockchain.isValid())
         res.status(200).json({message: "Valid blockchain"});

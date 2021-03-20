@@ -7,6 +7,7 @@ import './App.css';
 import Home from './pages/Home';
 import Blockchain from './pages/Blockchain';
 import Mempool from './pages/Mempool';
+import MyTx from './pages/MyTx';
 import Miner from './pages/Miner';
 import Wallet from './pages/Wallet';
 import Block from './pages/Block';
@@ -24,6 +25,7 @@ function App() {
             <Route path='/' component={Home} exact />
             <Route path='/blockchain' component={Blockchain} exact />
             <Route path='/transactions' component={Mempool} exact />
+            <Route path='/transactions/myTx' component={MyTx} exact />
             <Route path='/mine' component={Miner} exact />
             <Route path='/block/:blockNo' component={Block}/>
             <Route path='/wallet' component={Wallet} exact />

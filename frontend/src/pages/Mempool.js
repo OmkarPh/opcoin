@@ -10,6 +10,7 @@ import getRelativeTime from '../utility/relativeTime';
 import queryString from 'query-string';
 
 import Pagination from '../components/Pagination';
+import Transaction from '../components/Transaction';
 
 import fillRemainingRows from '../utility/remainingRows.js';
 
@@ -22,6 +23,20 @@ const Mempool = (props) => {
     const [transactions, setTransactions] = useState(undefined);
     const [isSyncing, setSyncing] = useState(false);
     const [status, setStatus] = useState(Date.now());
+
+    const [myTx, setMyTx] = useState(undefined);
+
+    const syncMyTx = () => {
+        axios
+          .get(`/api/mempool/tx/myTx`)
+          .then(res => {
+            console.log(res.data);
+              setTimeout(()=>{
+                setMyTx(res.data);
+            }, 1000);
+          })
+          .catch(err => console.error(err));        
+    }
 
     const syncMempool = (startLoader=true) => {
         if(startLoader)
@@ -46,6 +61,7 @@ const Mempool = (props) => {
     useEffect(() => {
         props.history.push(`${props.location.pathname}?page=${page}`)
         syncMempool(true);
+        syncMyTx();
         return ()=>{}
     },[page]);
 
@@ -54,6 +70,7 @@ const Mempool = (props) => {
     useEffect(()=>{
         const syncInterval = setInterval(()=>{
             syncMempool(false);
+            syncMyTx();
         }, process.env.REACT_APP_SYNC_DURATION || 30000);
         return ()=>{
             clearInterval(syncInterval);
@@ -93,12 +110,12 @@ const Mempool = (props) => {
                         <Table striped bordered hover size="sm" responsive>
                             <thead>
                                 <tr>
-                                <th>Sender</th>
-                                <th>Receiver</th>
+                                <th>ID / Hash</th>
                                 <th>Amount</th>
+                                <th>No. of Inputs</th>
+                                <th>No. of Outputs</th>
                                 <th>Fee</th>
-                                <th>Transacted</th>
-                                <th>id</th>
+                                <th>Time</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -106,12 +123,14 @@ const Mempool = (props) => {
                                     transactions.mempool.map(transaction => {
                                         return(
                                             <tr key={transaction.id}>
-                                                <td>{transaction.sender}</td>
-                                                <td>{transaction.receiver}</td>
-                                                <td>{transaction.amount}</td>
+                                                <td>{transaction.id}</td>
+                                                <td>{
+                                                    transaction.outputs.reduce((prev, curr)=>prev.amount + curr.amount)
+                                                }</td>
+                                                <td>{transaction.inputs.length}</td>
+                                                <td>{transaction.outputs.length}</td>
                                                 <td>{transaction.fee}</td>
                                                 <td>{getRelativeTime(transaction.timestamp)} </td> {""}
-                                                <td className="fa-ellipsis-h" >{transaction.id}</td>
                                             </tr>
                                         )
                                     })
@@ -119,7 +138,17 @@ const Mempool = (props) => {
                                 { fillRemainingRows(transactions.mempool.length, 6)}
                             </tbody>
                             </Table>
-                            <Pagination page={page} setPage={setPage} pagination={pagination} />
+                        <Pagination page={page} setPage={setPage} pagination={pagination} />
+                        <br/><br/>
+                        <h4>Your pending transactions: </h4>
+                        {
+                            myTx ? 
+                            myTx.map(tx => <Transaction tx={tx} />) 
+                            : 
+                            <Loader>
+                                <HashLoader color={"#03a30b"} loading={true} size={150} />
+                            </Loader>
+                        }
                     </div> 
                     :
                     <Loader>
