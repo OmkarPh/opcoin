@@ -16,7 +16,7 @@ import mempool from './mempool.js';
 import utxo from './utxo.js';
 
 import { KEYWORDS } from './utils/pubsub.js';
-import { BALANCE_TIMEOUT } from './CONSTANTS/index.js';
+import { BALANCE_TIMEOUT, DEFAULT_KEY } from './CONSTANTS/index.js';
 
 class Wallet {
     constructor(){
@@ -27,12 +27,16 @@ class Wallet {
 
         this.lastCalculated = Date.now() - BALANCE_TIMEOUT - 2000;
 
+
         // Replacing pair, if key was cached earlier.
         let cachedPrivateKey = cache.getKey('private');
-        if(!cachedPrivateKey)
-            cache.setKey('private', this.keyPair.getPrivate());
-        else
+        if(cachedPrivateKey)
             this.keyPair = ec.keyFromPrivate(cachedPrivateKey, 'hex');
+        else if(DEFAULT_KEY){
+            this.keyPair = ec.keyFromPrivate(DEFAULT_KEY, 'hex');
+            cache.setKey('private', this.keyPair.getPrivate());
+        } else
+            cache.setKey('private', this.keyPair.getPrivate());
 
         this.selfUtxo = new Map();
         this.selfPendingUtxo = new Map();

@@ -8,6 +8,7 @@ const EXPOSE_GLOBALLY = process.env.EXPOSE_GLOBALLY || 'no'
 const INIT_LISTEN = process.env.INIT_LISTEN || 30000
 const ENTRIES_PER_PAGE = process.env.ENTRIES_PER_PAGE || 3
 const BALANCE_TIMEOUT = process.env.BALANCE_TIMEOUT || 15000
+const DEFAULT_KEY = process.env.DEFAULT_KEY || undefined;
 
 // Necessary to link to my nodes, hence shared publicly.
 // API keys are capped, misuse would disable them and I won't be billed XD . 
@@ -22,6 +23,7 @@ const pubnubCredentials = {
 export {
     MAX_TRANSACTIONS,
     BALANCE_TIMEOUT,
+    DEFAULT_KEY,
     DIFFICULTY_ZEROES, 
     INIT_REWARD,
     HALVING_RATE,

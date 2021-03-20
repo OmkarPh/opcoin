@@ -154,8 +154,12 @@ const Wallet = () => {
 
             <Row>
                 <Col>
-                    <Link as="link" to="/keyChange" className="pt-2 d-block" style={{color:'red'}}>
-                        {'Change Private key?'}
+                    <Link 
+                        to="/keyChange" 
+                        className="pt-2 d-block"
+                        style={{color:'red', width: 'fit-content'}}
+                    >
+                        Change Private key?
                     </Link>
                 </Col>
             </Row>
