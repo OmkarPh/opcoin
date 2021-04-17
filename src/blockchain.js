@@ -10,6 +10,7 @@ import {CHANNELS, KEYWORDS} from './utils/pubsub.js';       // PubSub networking
 import Cache from './classes/Cache.js';
 const cache = new Cache('blockchain');
 
+import defaultBlockchain from './utils/loadDefaultBlockchain.js';
 
 // Constants
 import { INIT_LISTEN, MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
@@ -32,8 +33,12 @@ class Blockchain{
             this.newNodePubsub = new PubSub([CHANNELS.NEW_NODE_REQUESTS]);
             this.blockchainPubsub.addListener(this.receiveUpdatedChain.bind(this));
             
-            // Retrieve blockchain from previous boot up
-            this.receiveUpdatedChain(cache.getKey('blockchain'), {}, 'cache');
+            // Retrieve blockchain from previous boot up or load default data
+            let cachedChain = cache.getKey('blockchain');
+            if(!cachedChain)
+                cachedChain = defaultBlockchain;
+            
+            this.receiveUpdatedChain(cachedChain, {}, 'cache');
             
             // Add temporary listener and request blockchain updates
             this.newNodePubsub.addListener(msgObject=>{

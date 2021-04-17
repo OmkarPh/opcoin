@@ -1,7 +1,10 @@
 import path from 'path';
+
 import { stringify as flattedStringify } from 'flatted';
+
 import { ec, verifySignature } from './utils/ec.js';
 import hashSha256 from './utils/hash.js';
+
 import Transaction, {CoinbaseTransaction} from './classes/Transaction.js';
 
 
