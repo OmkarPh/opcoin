@@ -8,16 +8,20 @@ import { MAX_TRANSACTIONS, ENTRIES_PER_PAGE } from './CONSTANTS/index.js';
 import Transaction from './classes/Transaction.js';
 
 class Mempool {
+
     constructor(){
         this.mempool = [];
         this.mempoolPubsub = new PubSub([CHANNELS.OPCOIN_MEMPOOL]);
     }
+
     getLength(){
         return this.mempool.length;
     }
+
     getMempoolObj(){
         return this.mempool
     }
+
     getTransactionsFor(publickey){
         let filteredTx = [];
         txloop:
@@ -37,6 +41,7 @@ class Mempool {
         }
         return filteredTx;
     }
+
     getMempool(page){
         let len = this.mempool.length;
         
@@ -68,6 +73,7 @@ class Mempool {
             mempool: this.mempool.slice(startIndex, endIndex)
         };
     }
+
     addTransaction(transaction, source='network'){
         this.mempool.push(transaction);
         if(source != 'network')
@@ -78,15 +84,19 @@ class Mempool {
         console.log(`Added transaction #${transaction.id} to mempool from ${source}`);
         return true;
     }
+
     removeOutdatedTx(outdatedIds){
         this.mempool = this.mempool.filter(tx => !outdatedIds.includes(tx.id));
     }
+
     removeTransactions(newBlock){
         this.mempool.splice(0, this.getBestTransactions().length);
     }
+
     getBestTransactions(){
         return this.mempool.sort(Transaction.sortDescending).slice(0, MAX_TRANSACTIONS-1);
     }
+    
     syncMempool(){
         return false;
     }

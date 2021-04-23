@@ -1,10 +1,12 @@
 import { Transaction, CoinbaseTransaction } from './classes/Transaction.js';
 
 class UTXO{
+
     constructor(){
         this.record = new Map();
         this.postUpdateTasks = [];
     }
+
     processSingleBlock(newBlock, recordMap = this.record){
         const {height, transactions} = newBlock;
         
@@ -62,6 +64,7 @@ class UTXO{
             console.log(coinbase)
             return false;
         }
+
         recordMap.set(Transaction.hashUtxo({
             id: coinbase.id,
             index: 0
@@ -90,6 +93,7 @@ class UTXO{
     getUtxoRecord(){
         return this.record;
     }
+    
     hasUtxo(hash){
         let UTXO = this.record.get(hash);
         if(UTXO)
@@ -97,6 +101,7 @@ class UTXO{
                 return false;
         return true;
     }
+
     setPending(hash, postAmount = 0){
         if(this.record.has(hash)){
             this.record.get(hash).pending = postAmount;
@@ -104,6 +109,7 @@ class UTXO{
         }
         return false;
     }
+    
     getUtxo(hash){
         return this.record.get(hash)
     }

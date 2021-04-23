@@ -21,6 +21,7 @@ const CHANNELS = {
 }
 
 class PubSub{
+
     constructor(channels){
         try{
             this.pubnub = new PubNub(pubnubCredentials);
@@ -37,14 +38,13 @@ class PubSub{
         this.pubnub.addListener({
             message: msgObject => {
 
-                // Fields of message Object for reference:
+                // @Reference Fields of message Object
                 // const {message, actualChannel, channel, publisher, subscribedChannel, subscription, timetoken} = messageObject;
 
                 // Prevent repetition 
                 if(this.myPublishIds.has(msgObject.timetoken))
                     return;
                 
-
                 if(typeof msgObject.message === 'string')
                     listener(msgObject.message);
                 else

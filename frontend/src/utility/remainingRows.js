@@ -11,10 +11,7 @@ const fillRemainingRows = (actualLength, totalColumns=4) => {
         for(let i=0; i<(process.env.REACT_APP_ENTRIES_PER_PAGE - actualLength); i++){
             remainingRows.push(
                 <tr key={i}>
-                    {/* <td>{<br/>}</td>
-                    <td>{}</td>
-                    <td>{} </td> */}
-                    {cols}
+                    { cols }
                     <td className="fa-ellipsis-h">{}</td>
                 </tr>
             );

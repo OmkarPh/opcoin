@@ -1,15 +1,15 @@
 import React, {useState, useEffect} from 'react'
-import { useParams } from 'react-router-dom';
-import {Link} from 'react-router-dom';
-import HashLoader from "react-spinners/HashLoader";
-import {Container, ListGroup, Row, Col, Button} from 'react-bootstrap';
+import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import axios from 'axios';
 
+import {Container, ListGroup, Row, Col} from 'react-bootstrap';
+import HashLoader from "react-spinners/HashLoader";
+
+import minify from '../utility/minify';
 import Loader from '../components/Loader';
 import Transaction from '../components/Transaction';
 
-import axios from 'axios';
-import minify from '../utility/minify';
 
 const Entry = ({label, content}) => {
     return(
@@ -21,7 +21,7 @@ const Entry = ({label, content}) => {
     );
 }
 
-const Block = (props) => {
+const Block = () => {
     const { blockNo } = useParams();
     const [block, setBlock] = useState(undefined);
     const [transactions, setTransactions] = useState(undefined);

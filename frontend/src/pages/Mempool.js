@@ -1,18 +1,20 @@
-import React, {useEffect, useState, useRef } from 'react'
-import axios from 'axios';
+import React, {useEffect, useState } from 'react'
 import { Container, Table, Row, Col, Button } from 'react-bootstrap';
-import HashLoader from "react-spinners/HashLoader";
-import Loader from '../components/Loader';
 import {Helmet} from 'react-helmet';
+import axios from 'axios';
+import queryString from 'query-string';
+
+import HashLoader from "react-spinners/HashLoader";
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+
 import getRelativeTime from '../utility/relativeTime';
-import queryString from 'query-string';
+import fillRemainingRows from '../utility/remainingRows.js';
 
 import Pagination from '../components/Pagination';
 import Transaction from '../components/Transaction';
-
-import fillRemainingRows from '../utility/remainingRows.js';
+import Loader from '../components/Loader';
 
 const Mempool = (props) => {
     let params = queryString.parse(props.location.search);

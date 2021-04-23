@@ -1,19 +1,20 @@
 import React, {useEffect, useState, useRef } from 'react'
-import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Container, Table, Row, Col, Button } from 'react-bootstrap';
 import {Helmet} from 'react-helmet';
-import HashLoader from "react-spinners/HashLoader";
-import Loader from '../components/Loader';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+
 import getRelativeTime from '../utility/relativeTime';
 import queryString from 'query-string';
 
-import Pagination from '../components/Pagination';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSync } from '@fortawesome/free-solid-svg-icons';
 
+import { Container, Table, Row, Col, Button } from 'react-bootstrap';
+import HashLoader from "react-spinners/HashLoader";
+
+import Loader from '../components/Loader';
 import fillRemainingRows from '../utility/remainingRows';
-
+import Pagination from '../components/Pagination';
 import TableWrapper from './blockchain.styled';
 
 const Blockchain = (props) => {
@@ -31,6 +32,7 @@ const Blockchain = (props) => {
         if(startLoader)
             setBlockchain(undefined);
         setSyncing(true);
+
         axios
           .get(`/api/blockchain?page=${page}`)
           .then(res => {
@@ -59,6 +61,7 @@ const Blockchain = (props) => {
         const syncInterval = setInterval(()=>{
             syncChain(false);
         }, process.env.REACT_APP_SYNC_DURATION || 30000);
+
         return ()=>{
             clearInterval(syncInterval);
         }
@@ -79,13 +82,15 @@ const Blockchain = (props) => {
                                     disabled={isSyncing}
                                     onClick={!isSyncing ? ()=>syncChain(false) : null}
                                 >
-                                { isSyncing ?'Sync in progress ':'Sync Blockchain' }
+                                { isSyncing ? 'Sync in progress ' : 'Sync Blockchain' }
                                 &nbsp;&nbsp;
                                 <FontAwesomeIcon icon={faSync} className={`${isSyncing?'fa-spin':''}`} />
                             </Button>
                             </Col>
                         </Row>
+
                         <span className="visible-xs-inline"><br/></span>
+                        
                         <Row className="mb-12">
                             <Col md="4">
                                 Current Length of blockchain: {blockchain.length}
@@ -138,7 +143,6 @@ const Blockchain = (props) => {
                     <Loader>
                         <HashLoader color={"#0466cf"} loading={true} size={150} />
                     </Loader>
-
             } 
         </Container>
     )

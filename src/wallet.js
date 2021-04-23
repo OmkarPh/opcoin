@@ -1,8 +1,6 @@
-import path from 'path';
-
 import { stringify as flattedStringify } from 'flatted';
 
-import { ec, verifySignature } from './utils/ec.js';
+import { ec } from './utils/ec.js';
 import hashSha256 from './utils/hash.js';
 
 import Transaction, {CoinbaseTransaction} from './classes/Transaction.js';
@@ -64,25 +62,32 @@ class Wallet {
             mempool.removeOutdatedTx(outdatedTxIDs);
         });
     }
+
     sign(data){
         return this.keyPair.sign(hashSha256(data));
     }
+
     getPostTxBalance(){
         return this.postTxBalance;
     }
+
     getSelfUtxo(){
         return this.selfUtxo;
     }
+
     getBalance(){
         return this.balance;
     }
+
     getPrivateKey(){
         let pk = flattedStringify(this.keyPair.getPrivate());
         return pk.substring(2, pk.length-2);
     }
+
     getPublicKey(){
         return this.keyPair.getPublic().encode('hex');
     }
+
     setPrivateKey(newPrivateKey){
         if(typeof newPrivateKey != 'string')
             throw new Error('Expected new private key to be a string');
@@ -102,9 +107,11 @@ class Wallet {
 
         this.calculateBalance(true);
     }
+
     createCoinbase(height, fees){
         return new CoinbaseTransaction(height, this.getPublicKey(), fees);
     }
+
     calculateBalance(forced=false){
         if(!forced && Date.now() - this.lastCalculated < BALANCE_TIMEOUT)
             return this.balance;
@@ -177,8 +184,6 @@ class Wallet {
 
         return inputUtxos;
     }
-
-
 
     createTransaction({receiverPublicKey, amount}){
         this.calculateBalance(true);

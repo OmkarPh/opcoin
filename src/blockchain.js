@@ -24,6 +24,7 @@ import utxo from './utxo.js';       // Can be removed by dependency injection Lo
 
 // Major object
 class Blockchain{
+
     constructor(){
         this.chain = [];
         this.nodeAddress = uuidv4().replace('-','');
@@ -74,23 +75,29 @@ class Blockchain{
             console.log("Something weird happened while creating Blockchain object");
         }
     }
+
     getLength(){    
         return this.chain.length
     }
+
     getBlock(blockNo){
         if(this.chain.length == 0 || blockNo >= this.chain.length )      
             return undefined;
         return this.chain[blockNo];
     }
+
     getChain(){
         return  this.chain
     }
+
     getChainWithHashes(page){
         return hashedChain(page, this.chain)
     }
+
     isValid(chainToValidate=this.chain){
         return isValidChain(chainToValidate);
     }
+
     getTransactionsFor(publickey){
         let filteredTx = [];
         for(let {transactions} of this.chain){          
@@ -111,11 +118,13 @@ class Blockchain{
         }
         return filteredTx;
     }
+
     getLastBlock(){ 
         if(this.chain.length == 0)      
             return null;
         return this.chain[this.chain.length -1] 
     }
+
     copyChain(newChain){
         if(newChain == null || newChain.length == 0)    
             return false;
@@ -143,6 +152,7 @@ class Blockchain{
             return false;
         }
     }
+
     receiveUpdatedChain(newChain, msgObj, source='network'){
         try{
             let blockchain = this;
@@ -154,7 +164,7 @@ class Blockchain{
                     console.log(`Copied chain with length ${newChain.length} from ${source}`);
                 else
                     console.log(`Rejected an invalid chain with length ${newChain.length} from ${source}`);
-            }else
+            } else
                 console.log(`Rejected a shorter chain with length ${newChain.length} from ${source}`);
 
             // Caching correct chain to cache
@@ -167,6 +177,7 @@ class Blockchain{
             console.log('Something weird happened when received new blockchain !');
         }
     }
+
     mineBlock(minerWallet){
          const transactions = [];
 
@@ -222,8 +233,7 @@ class Blockchain{
         }
     }
 }
+
+
 const blockchain = new Blockchain();
-
-
-
 export default blockchain;

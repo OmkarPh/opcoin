@@ -26,7 +26,8 @@ const getChainWithHashes = (page, chain) => {
     }
 
     // If only startIndex is out of bound, then make it 0 
-    if(startIndex < 0)  startIndex = 0;
+    if(startIndex < 0)  
+        startIndex = 0;
 
     return {
         page,

@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
 import {Helmet} from 'react-helmet';
+
 import Header from './components/Header'
 import Footer from './components/Footer'
-import './App.css';
 
 import Home from './pages/Home';
 import Blockchain from './pages/Blockchain';
@@ -14,6 +14,7 @@ import Block from './pages/Block';
 import ChangePrivateKey from './pages/ChangePrivate';
 import Info from './pages/Info';
 
+import './App.css';
 
 function App() {
   return (

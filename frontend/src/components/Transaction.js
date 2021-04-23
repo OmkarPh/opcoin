@@ -1,15 +1,12 @@
 import React from 'react'
 import { Row, Col, Button } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt, faCopy } from '@fortawesome/free-solid-svg-icons';
 
 import minify from '../utility/minify';
 
-
-
 const Transaction = ({tx}) => {
-    console.log(tx);
     return (
         <Row className="border-bottom border-black border-darken-2 py-2 my-2">
             <Col>
@@ -18,7 +15,7 @@ const Transaction = ({tx}) => {
                         return(
                             <Row>
                                 <Col xs={8} alt={inp.sender}>
-                                    {minify(inp.sender, 35)}
+                                    { minify(inp.sender, 35) }
                                     {
                                         inp.sender != 'COINBASE' ?
                                         <Button

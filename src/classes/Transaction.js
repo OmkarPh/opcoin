@@ -27,7 +27,6 @@ function createInput(senderWallet, inputUtxos, outputs){
 }
 
 
-
 export default class Transaction{
     constructor({senderWallet, receiver, amount, inputUtxos}){
         this.timestamp = Date.now().toString();
@@ -64,8 +63,6 @@ export default class Transaction{
         fees = Number(fees.toFixed(7));
         returns = Number(returns.toFixed(7));
         
-
-
         return [fees, returns];
     }
 
@@ -129,8 +126,7 @@ export default class Transaction{
 }
 
 class CoinbaseTransaction{
-    constructor(height, minerPublicKey, fees){
-        
+    constructor(height, minerPublicKey, fees){        
         this.timestamp = Date.now().toString();
         
         let reward = calculateReward(height, fees);
@@ -147,7 +143,6 @@ class CoinbaseTransaction{
     }
 
     static verify({inputs, outputs}, height, fees=0){
-
         const suitableReward = calculateReward(height, fees);
         
         if(inputs.length != 1 || outputs.length != 1){
@@ -155,6 +150,7 @@ class CoinbaseTransaction{
             console.log(coinbaseTransaction);
             return false;
         }
+        
         if(inputs[0].amount != suitableReward || outputs[0].amount != suitableReward){
             let diffInp = suitableReward - Number(inputs[0].amount);
             let diffOut = suitableReward - Number(outputs[0].amount);
@@ -165,6 +161,7 @@ class CoinbaseTransaction{
                 return false;
             }
         }
+
         return true;
     }
 }

@@ -5,7 +5,6 @@ import { faCopy } from '@fortawesome/free-solid-svg-icons';
 
 import axios from 'axios';
 
-
 import Loader from '../components/Loader';
 import HashLoader from "react-spinners/HashLoader";
 

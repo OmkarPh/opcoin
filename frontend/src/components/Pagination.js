@@ -20,25 +20,34 @@ const paginationItems = (activePage, maxPages, setPage)=>{
 const customPagination = ({page, setPage, pagination}) => {
     return (
         <Pagination>
-        {/* <Pagination.First onClick={()=>setPage(1)} disabled={page==1} />
-        <Pagination.Prev onClick={()=>setPage(page=>page-1)} disabled={page==1}/> */}
-        <Pagination.Item onClick={()=>setPage(1)} active={page === 1}>1</Pagination.Item>
-        { (page-2) > 2 ? <Pagination.Ellipsis /> : null }
-        
-        { paginationItems(page, pagination.maxPages, setPage) }
+            <Pagination.Item onClick={ ()=>setPage(1) } active={ page === 1 }>
+                1
+            </Pagination.Item>
 
-        { (pagination.maxPages-page > 1 && pagination.maxPages-(page+4) > 1) ? <Pagination.Ellipsis /> : null }
-        {
-            pagination.maxPages > 1 ?
-                <Pagination.Item  
-                    onClick={()=>setPage(pagination.maxPages)} 
-                    active={page === pagination.maxPages}>
-                    {pagination.maxPages}
-                </Pagination.Item>
-            : null
-        }
-        {/* <Pagination.Next />
-        <Pagination.Last /> */}
+            { 
+                (page-2) > 2 ? 
+                    <Pagination.Ellipsis /> 
+                    : null 
+            }
+            
+            { paginationItems(page, pagination.maxPages, setPage) }
+
+            { 
+                (pagination.maxPages-page > 1 && pagination.maxPages-(page+4) > 1) ? 
+                <Pagination.Ellipsis /> 
+                : null 
+            }
+
+            {
+                pagination.maxPages > 1 ?
+                    <Pagination.Item  
+                        onClick={()=>setPage(pagination.maxPages)} 
+                        active={page === pagination.maxPages}>
+                        {pagination.maxPages}
+                    </Pagination.Item>
+                : null
+            }
+            
         </Pagination>
     )
 }

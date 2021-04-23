@@ -2,7 +2,6 @@ import React, {useState, useEffect} from 'react'
 import {Container, Row, Col, Button, Card, InputGroup, Form, FormControl} from 'react-bootstrap'
 import axios from 'axios';
 
-
 import HashLoader from "react-spinners/HashLoader";
 import Loader from '../components/Loader';
 import Transaction from '../components/Transaction';

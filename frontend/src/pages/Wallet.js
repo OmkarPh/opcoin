@@ -1,11 +1,10 @@
 import React, {useEffect, useState} from 'react'
-import {Link} from 'react-router-dom';
-import {Container, Row, Col, Button, Card, InputGroup, Form, FormControl} from 'react-bootstrap'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faExternalLinkAlt, faExternalLinkSquareAlt } from '@fortawesome/free-solid-svg-icons';
-
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+import { Container, Row, Col, Button, Card, Form } from 'react-bootstrap'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCopy, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 
 import Loader from '../components/Loader';
 import HashLoader from "react-spinners/HashLoader";
@@ -34,7 +33,7 @@ const Wallet = () => {
                 setWallet(res.data);  
               }, 1000)
           })
-          .catch(err => console.error(err));
+          .catch( err => console.error(err) );
     }
 
     function fetchUtxos(){
@@ -45,7 +44,7 @@ const Wallet = () => {
                 setUtxos(res.data);
             })
           })
-          .catch(err => console.error(err));
+          .catch( err => console.error(err) );
     }
 
     function sendOpcoins(e){

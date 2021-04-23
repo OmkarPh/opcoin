@@ -10,6 +10,7 @@ export default class Block{
         
         this.prevHash = prevHash;
     }
+    
     hashSelf(){
         // Globally used hash function for verification
         return hasher(JSON.stringify(this));
