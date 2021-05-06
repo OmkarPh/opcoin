@@ -23,6 +23,7 @@ const Entry = ({label, content}) => {
 
 const Block = () => {
     const { blockNo } = useParams();
+
     const [block, setBlock] = useState(undefined);
     const [transactions, setTransactions] = useState(undefined);
     const [error, setError] = useState(undefined);
@@ -52,7 +53,7 @@ const Block = () => {
                     </div> 
                 : block ?
                     <Container className="align-self-md-start mt-lg-3" style={{fontSize: "18px"}}>
-                        <Helmet title={`Block ${block.height}`} />
+                        <Helmet title={`Block #${block.height}`} />
                         <Link as="link" to="/blockchain" className="mb-4 pt-0 d-block">
                             {'<- All blocks'}
                         </Link>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Container, Image } from 'react-bootstrap';
-import { useParams, Link } from 'react-router-dom';
+import Helmet from 'react-helmet';
+import { useParams } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +24,7 @@ const Info = () => {
     return (
         about == 'project' ?
         <Container >
+            <Helmet title={'Project structure'} />
             <h3>Project structure</h3>
             <Image src={structure} fluid className="border border-black" />
             <br/><br/><br/>
@@ -31,6 +33,7 @@ const Info = () => {
 
         : about == 'pubsub' ?
         <Container>
+            <Helmet title={'Publisher subscriber model'} />
             <h3>Publisher Subscriber model</h3>
 
             Read:<br/>
@@ -48,6 +51,7 @@ const Info = () => {
 
         :
         <Container>
+            <Helmet title={'Blockchain'} />
             <h3>General Blockchain structure</h3>
             <Image src={blockchainOverview} height="300px" className="border border-black"/>
             <br/><br/>

@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
 
 import { Container, Row, Col, Button, Card, Form } from 'react-bootstrap'
@@ -97,6 +98,7 @@ const Wallet = () => {
     return (
         wallet ?
         <Container>
+            <Helmet title={'Your wallet'} />
             <Button
                 variant="primary"
                 className="mb-3"

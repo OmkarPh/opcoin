@@ -1,5 +1,6 @@
-import React, {useState, useEffect} from 'react'
-import {Container, Row, Col, Button, Card, InputGroup, Form, FormControl} from 'react-bootstrap'
+import React, {useState, useEffect} from 'react';
+import Helmet from 'react-helmet';
+import { Container } from 'react-bootstrap';
 import axios from 'axios';
 
 import HashLoader from "react-spinners/HashLoader";
@@ -25,6 +26,7 @@ const MyTx = () => {
             {
                 myTx ?
                 <div>
+                    <Helmet title={'My transactions'} />
                     <h2>My transactions (Both spent and unspent): </h2>
                     {
                         myTx.map(tx => <Transaction tx={tx} />)

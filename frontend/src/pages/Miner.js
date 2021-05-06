@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Helmet } from 'react-helmet';
 import { Button, Container } from 'react-bootstrap'
 import axios from 'axios';
 
@@ -29,6 +30,7 @@ const Miner = () => {
     
     return (
         <Container>
+            <Helmet title={`Mining rig`} />
             <Button
                 variant="primary"
                 disabled={isMining}
