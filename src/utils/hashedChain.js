@@ -2,8 +2,7 @@ import { ENTRIES_PER_PAGE } from '../CONSTANTS/index.js';
 
 const getChainWithHashes = (page, chain) => { 
     
-    let len = chain.length;
-
+    const len = chain.length;
 
     // If final length of response is greater than actual length, return chain without slicing
     if(len <= ENTRIES_PER_PAGE || !page)

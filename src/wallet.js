@@ -5,7 +5,6 @@ import hashSha256 from './utils/hash.js';
 
 import Transaction, {CoinbaseTransaction} from './classes/Transaction.js';
 
-
 // File-based caching
 import Cache from './classes/Cache.js';
 const cache = new Cache('wallet');

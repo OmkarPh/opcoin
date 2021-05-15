@@ -3,7 +3,8 @@ import { DIFFICULTY_ZEROES } from '../CONSTANTS/index.js';
 const isValid = (chain) => {
 
     // Chains with 0 or 1 block are by default valid 
-    if(chain.length <= 1)  return true;
+    if(chain.length <= 1)  
+        return true;
 
     let prevBlock = chain[0];
     let currBlock, currProof, prevProof, hash;

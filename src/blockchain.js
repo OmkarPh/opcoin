@@ -1,7 +1,3 @@
-import path from 'path';
-
-import { v4 as uuidv4 } from 'uuid';
-
 // Utility modules
 import { calculateTotalFees, PubSub, isValidChain, hashedChain, pow } from './utils/index.js';
 import {CHANNELS, KEYWORDS} from './utils/pubsub.js';       // PubSub networking constants
@@ -27,7 +23,6 @@ class Blockchain{
 
     constructor(){
         this.chain = [];
-        this.nodeAddress = uuidv4().replace('-','');
         this.postUpdateTasks = [];
         try{
             this.blockchainPubsub = new PubSub([CHANNELS.OPCOIN]);
